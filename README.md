@@ -1,2 +1,2 @@
-# gadget-corutines
+# gadget-coroutines
 Coroutines for Gadgets
