@@ -16,6 +16,9 @@
 /// warning: throw will always call terminate() [-Wterminate]
 /// note: in C++11 destructors default to noexcept
 
+/// This library requires exceptions to be enabled
+static_assert( __cpp_exceptions );
+
 
 class GCoroutine_internal_error : public std::runtime_error
 {
