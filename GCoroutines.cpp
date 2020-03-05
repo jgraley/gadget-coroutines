@@ -104,8 +104,7 @@ GCoroutine::GCoroutine( function< void(GCoroutine *) > child_function ) :
             // No break required: longjump does not return
         }
         default:
-        {
-            // This setjmp call was only to get the stack pointer. 
+        {            
             throw GCoroutine_bad_longjmp_value(__FILE__, __LINE__, val);
         }
     }
