@@ -12,5 +12,5 @@ works.
 
 ## Handy links
 
-http://www.arduino.cc/en/Guide/Libraries
-https://github.com/arduino/Arduino/wiki/Library-Manager-FAQ
+ - http://www.arduino.cc/en/Guide/Libraries
+ - https://github.com/arduino/Arduino/wiki/Library-Manager-FAQ
