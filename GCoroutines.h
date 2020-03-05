@@ -16,6 +16,8 @@
 /// warning: throw will always call terminate() [-Wterminate]
 /// note: in C++11 destructors default to noexcept
 
+/// @TODO require C++11
+
 /// This library requires exceptions to be enabled
 static_assert( __cpp_exceptions );
 
