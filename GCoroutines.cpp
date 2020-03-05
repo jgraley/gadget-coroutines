@@ -57,7 +57,7 @@ enum
     IMMEDIATE = 0, // Must be zero
     PARENT_TO_CHILD = 1, // All the others must be non-zero
     CHILD_TO_PARENT = 2,
-    PARENT_TO_CHILD_BOOTING = 3
+    PARENT_TO_CHILD_STARTING = 3
 };
 
 
@@ -89,7 +89,7 @@ GCoroutine::GCoroutine( function< void(GCoroutine *) > child_function ) :
             set_jmp_buf_sp(child_jmp_buf, new_stack_pointer);
             break;
         }
-        case PARENT_TO_CHILD_BOOTING:
+        case PARENT_TO_CHILD_STARTING:
         {
             /// TODO: catch absolutely every exception here, end the coroutine, and return the exception
             child_status = RUNNING;
@@ -132,7 +132,7 @@ void GCoroutine::run_iteration()
             {
                 case READY:
                 {
-                    longjmp(child_jmp_buf, PARENT_TO_CHILD_BOOTING);
+                    longjmp(child_jmp_buf, PARENT_TO_CHILD_STARTING);
                     // No break required: longjump does not return
                 }
                 case RUNNING:
