@@ -10,61 +10,34 @@
 #include <functional>
 #include <csetjmp> /// @TODO use std::any to break dependency
 #include <cstdint>
-#include <stdexcept>
 	
-/// @TODO add modern exception specs. Currently getting warnings around ~GCoroutines() like 
-/// warning: throw will always call terminate() [-Wterminate]
-/// note: in C++11 destructors default to noexcept
-
-/// This library requires exceptions to be enabled
-static_assert( __cpp_exceptions );
-
-
-class GCoroutine_internal_error : public std::runtime_error
-{
-public:
-    explicit GCoroutine_internal_error( const std::string& what_arg );
-};
-
-
-class GCoroutine_bad_longjmp_value : public GCoroutine_internal_error
-{
-public:
-    explicit GCoroutine_bad_longjmp_value(const char *file, int line, int val);
-};
-
-
-class GCoroutine_TODO : public GCoroutine_internal_error
-{
-public:
-    explicit GCoroutine_TODO(std::string what);
-};
-
-
-
 class GCoroutine
 {
 public:
     typedef uint8_t byte;
 
-    explicit GCoroutine( std::function< void(GCoroutine *) > child_function );
+    explicit GCoroutine( void (*child_main_function_)(GCoroutine *) ); // @TODO back to std::function if possible @TODO if we can use cls effectively, no need for the GCoroutine * argument
     ~GCoroutine();
     
     void run_iteration();
     void yield();
 
-private:
+//private:
     enum ChildStatus
     {
         READY,
         RUNNING,
         COMPLETE
     };
+    
+    [[ noreturn ]] void start_child();
 
-    // @TODO Some kind of magic to protect all methods
+    const int magic;
+    void (* const child_main_function)(GCoroutine *);
     const int stack_size;
     byte * const child_stack_memory;
     ChildStatus child_status;
+    jmp_buf parent_jmp_buf;
     jmp_buf child_jmp_buf;
     
     static const int default_stack_size = 1024;

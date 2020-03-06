@@ -6,7 +6,27 @@
 
 #include "GCoroutines.h"
 #include <cstring>
-#include <stdexcept>
+
+void _trace( const char *file, int line, const char *sformat, const char *uformat, ... )
+{
+    va_list args;
+    va_start( args, uformat );
+    char buf[256];
+    snprintf( buf, sizeof(buf), sformat, file, line );
+    int l = strlen(buf);
+    vsnprintf( buf+l, sizeof(buf)-l, uformat, args );
+    buf[sizeof(buf)-1] = '\0';
+    Serial.println(buf); // @TODO make this user-replaceable
+    delay(100);
+    va_end( args );
+}
+
+#define TRACE( ARGS... ) do { _trace( __FILE__, __LINE__, "%s:%d ", ARGS); } while(0)
+#define FAIL( ARGS... ) do { _trace( __FILE__, __LINE__, "Failed at %s:%d ", ARGS); abort(); } while(0)
+#define ASSERT( COND, ARGS... ) do { if(!(COND)) FAIL(ARGS); } while(0)
+
+// @TODO deal with wanings this generates
+#define GCO_MAGIC 'GCo'
 
 using namespace std;
 
@@ -20,7 +40,7 @@ static_assert( sizeof(int) == sizeof(void *) );
 static_assert( sizeof(jmp_buf) == sizeof(int[23]) );
 
 static const int ARM_JMPBUF_INDEX_SP = 8;
-inline byte *get_jmp_buf_sp( jmp_buf env )
+inline void *get_jmp_buf_sp( jmp_buf env )
 {
     return reinterpret_cast<byte *>( env[ARM_JMPBUF_INDEX_SP] );
 }
@@ -32,25 +52,22 @@ inline void *get_frame_address()
 {
     return reinterpret_cast<void *>( __builtin_frame_address(0) );
 }
+static const int ARM_JMPBUF_INDEX_TLS = 5;
+inline void *get_jmp_buf_cls( jmp_buf env )
+{
+    return reinterpret_cast<byte *>( env[ARM_JMPBUF_INDEX_TLS] );
+}
+inline void set_jmp_buf_cls( jmp_buf env, void *new_cls )
+{
+    env[ARM_JMPBUF_INDEX_TLS] = reinterpret_cast<int>(new_cls);
+}
+inline void *get_cls()
+{
+    void *cls;
+    asm( "mov %[result], r9" : [result] "=r" (cls) : : );
+    return cls;
+}
 #endif
-
-GCoroutine_internal_error::GCoroutine_internal_error( const string& what_arg ) :
-    runtime_error( string("GCoroutines: ") + what_arg )
-{
-}
-
-
-GCoroutine_bad_longjmp_value::GCoroutine_bad_longjmp_value( const char *file, int line, int val ) :
-    GCoroutine_internal_error( string(file) + ":" + to_string(line) + " bad longjmp val: " + to_string(val) )
-{
-}
-
-
-GCoroutine_TODO::GCoroutine_TODO( string what ) :
-    GCoroutine_internal_error( "TODO: " + what )
-{
-}
-
 
 enum
 {
@@ -61,7 +78,9 @@ enum
 };
 
 
-GCoroutine::GCoroutine( function< void(GCoroutine *) > child_function ) :
+GCoroutine::GCoroutine( void (*child_main_function_)(GCoroutine *) ) :
+    magic( GCO_MAGIC ),
+    child_main_function( child_main_function_ ),
     stack_size( default_stack_size ),
     child_stack_memory( new byte[stack_size] ),
     child_status(READY)
@@ -72,8 +91,9 @@ GCoroutine::GCoroutine( function< void(GCoroutine *) > child_function ) :
     { 
         case IMMEDIATE:
         {
-            // Get current stack pointer and frame address
-            byte *stack_pointer = get_jmp_buf_sp(parent_jmp_buf);
+            // Get current stack pointer and frame address @TODO bring this bit out into its own function
+            // taking care that it will have a different stack frame
+            byte *stack_pointer = static_cast<byte *>( get_jmp_buf_sp(parent_jmp_buf) );
             byte *frame_start_pointer = static_cast<byte *>( get_frame_address() );
             
             // Decide how much stack to keep (basically the current frame, i.e. the 
@@ -87,42 +107,47 @@ GCoroutine::GCoroutine( function< void(GCoroutine *) > child_function ) :
             // Prepare a jump buffer for the child and point it to the new stack
             memcpy( &child_jmp_buf, &parent_jmp_buf, sizeof(jmp_buf) );
             set_jmp_buf_sp(child_jmp_buf, new_stack_pointer);
+            set_jmp_buf_cls(child_jmp_buf, this);
             break;
         }
         case PARENT_TO_CHILD_BOOTING:
         {
-            /// TODO: catch absolutely every exception here, end the coroutine, and return the exception
-            child_status = RUNNING;
-            
-            // Invoke the child. We take the view that this is enough to give
-            // it its first "timeslice"
-            child_function(this);
-            
-            // If we get here, child returned without yielding (i.e. like a normal function).
-            child_status = COMPLETE;
-            longjmp(child_jmp_buf, CHILD_TO_PARENT);
-            // No break required: longjump does not return
+            GCoroutine * const that = static_cast<GCoroutine *>(get_cls());
+            that->start_child();            
         }
         default:
         {
             // This setjmp call was only to get the stack pointer. 
-            throw GCoroutine_bad_longjmp_value(__FILE__, __LINE__, val);
+            FAIL("unexpected longjmp value: %d", val);
         }
     }
 }
 
-
 GCoroutine::~GCoroutine()
 {
-    if( child_status != COMPLETE )
-        throw GCoroutine_TODO("cancel child by injecting an exception");
+    ASSERT( child_status == COMPLETE, "destruct when child was not complete, status %d", static_cast<int>(child_status) );
     delete[] child_stack_memory;
 }
 
         
+[[ noreturn ]] void GCoroutine::start_child()
+{
+    ASSERT( magic==GCO_MAGIC, "bad this pointer or object corrupted: %p", this ); // @TODO many more of these checks
+    child_status = RUNNING;
+    
+    // Invoke the child. We take the view that this is enough to give
+    // it its first "timeslice"
+    (*child_main_function)(this);
+    
+    // If we get here, child returned without yielding (i.e. like a normal function).
+    child_status = COMPLETE;
+    longjmp(child_jmp_buf, CHILD_TO_PARENT);
+    // No break required: longjump does not return
+}
+
+
 void GCoroutine::run_iteration()
 {
-    jmp_buf parent_jmp_buf;
     int val;
     switch( val = setjmp(parent_jmp_buf) )
     {                    
@@ -137,7 +162,6 @@ void GCoroutine::run_iteration()
                 }
                 case RUNNING:
                 {
-                    // @TODO Store message if required, (queues will be an add-on)
                     longjmp(child_jmp_buf, PARENT_TO_CHILD);
                     // No break required: longjump does not return
                 }
@@ -150,18 +174,18 @@ void GCoroutine::run_iteration()
         
         case CHILD_TO_PARENT:
         {
+            // Warning: no this pointer
             return; // TODO child's stored waiting or completed message
         }
                     
         default:
         {
-            throw GCoroutine_bad_longjmp_value(__FILE__, __LINE__, val);
+            FAIL("unexpected longjmp value: %d", val);
         }
     }
 }        
         
         
-// @TODO use r9 to always have a GCoroutine::this ready to go
 void GCoroutine::yield()
 {
     // @TODO check we're in the correct stack. If not then (a) we're the
@@ -174,18 +198,18 @@ void GCoroutine::yield()
         case IMMEDIATE:
         {
             // Run the main routine
-            longjmp(child_jmp_buf, CHILD_TO_PARENT);
+            longjmp(parent_jmp_buf, CHILD_TO_PARENT);
             // No break required: longjump does not return
         }
         case PARENT_TO_CHILD:
         {
-            // If the child has ever yielded, it's context will come back to here
-            // @TODO throw if required
+            // If the child has ever yielded, its context will come back to here
+            // Warning: no this pointer
             return; 
         }    
         default:
         {
-            throw GCoroutine_bad_longjmp_value(__FILE__, __LINE__, val);
+            FAIL("unexpected longjmp value: %d", val);
         }
     }    
 }
