@@ -74,7 +74,7 @@ enum
     IMMEDIATE = 0, // Must be zero
     PARENT_TO_CHILD = 1, // All the others must be non-zero
     CHILD_TO_PARENT = 2,
-    PARENT_TO_CHILD_BOOTING = 3
+    PARENT_TO_CHILD_STARTING = 3
 };
 
 
@@ -110,8 +110,9 @@ GCoroutine::GCoroutine( void (*child_main_function_)(GCoroutine *) ) :
             set_jmp_buf_cls(child_jmp_buf, this);
             break;
         }
-        case PARENT_TO_CHILD_BOOTING:
+        case PARENT_TO_CHILD_STARTING:
         {
+            // Warning: no this pointer
             GCoroutine * const that = static_cast<GCoroutine *>(get_cls());
             that->start_child();            
         }
@@ -157,7 +158,7 @@ void GCoroutine::run_iteration()
             {
                 case READY:
                 {
-                    longjmp(child_jmp_buf, PARENT_TO_CHILD_BOOTING);
+                    longjmp(child_jmp_buf, PARENT_TO_CHILD_STARTING);
                     // No break required: longjump does not return
                 }
                 case RUNNING:

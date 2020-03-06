@@ -11,6 +11,9 @@
 #include <csetjmp> /// @TODO use std::any to break dependency
 #include <cstdint>
 	
+/// @TODO require C++11
+
+
 class GCoroutine
 {
 public:
