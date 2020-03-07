@@ -34,6 +34,7 @@ private:
         COMPLETE
     };
     
+    void prepare_child_stack( byte *frame_pointer, jmp_buf initial_jmp_buf );
     [[ noreturn ]] void start_child();
 
     const uint32_t magic;

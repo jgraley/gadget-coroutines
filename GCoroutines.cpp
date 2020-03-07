@@ -104,15 +104,15 @@ GCoroutine::GCoroutine( void (*child_main_function_)(GCoroutine *) ) :
     child_stack_memory( new byte[stack_size] ),
     child_status(READY)
 {
-    jmp_buf parent_jmp_buf;
+    jmp_buf initial_jmp_buf;
     int val;
-    switch( val = setjmp(parent_jmp_buf) )
+    switch( val = setjmp(initial_jmp_buf) )
     { 
         case IMMEDIATE:
         {
             // Get current stack pointer and frame address @TODO bring this bit out into its own function
             // taking care that it will have a different stack frame
-            byte *stack_pointer = static_cast<byte *>( get_jmp_buf_sp(parent_jmp_buf) );
+            byte *stack_pointer = static_cast<byte *>( get_jmp_buf_sp(initial_jmp_buf) );
             byte *frame_start_pointer = static_cast<byte *>( get_frame_address() );
             
             // Decide how much stack to keep (basically the current frame, i.e. the 
@@ -124,7 +124,7 @@ GCoroutine::GCoroutine( void (*child_main_function_)(GCoroutine *) ) :
             memmove( new_stack_pointer, stack_pointer, bytes_to_retain );
             
             // Prepare a jump buffer for the child and point it to the new stack
-            memcpy( &child_jmp_buf, &parent_jmp_buf, sizeof(jmp_buf) );
+            memcpy( &child_jmp_buf, &initial_jmp_buf, sizeof(jmp_buf) );
             set_jmp_buf_sp(child_jmp_buf, new_stack_pointer);
             set_jmp_buf_cls(child_jmp_buf, this);
             break;
