@@ -10,6 +10,12 @@
 #include <csetjmp> 
 #include <cstdint>
 
+// TODO integrate with wiringpi yeild()
+// TODO wait() on lambda with timeout object
+// TODO micros() in log
+// TODO tabs in log based on cls
+// TODO GCoroutine(s) -> Coroutine(s)
+
 using namespace std;
 
 function< void(const char *) >  _gcoroutines_logger = [](const char *message)
@@ -233,5 +239,12 @@ void GCoroutine::yield()
             FAIL("unexpected longjmp value: %d", val);
         }
     }    
+}
+
+void co_yield()
+{
+    GCoroutine * const that = static_cast<GCoroutine *>(get_cls());
+    TRACE("cls=%p", that);
+    that->yield();
 }
 

@@ -47,4 +47,6 @@ private:
     static const int default_stack_size = 1024;
 };
 
+void co_yield();
+
 #endif

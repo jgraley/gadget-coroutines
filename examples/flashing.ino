@@ -24,6 +24,7 @@ void setup() {
 
 // the loop function runs over and over again forever
 void loop() {
+  Serial.println("Tick!!");
   led_flasher.run_iteration();
 }
 
