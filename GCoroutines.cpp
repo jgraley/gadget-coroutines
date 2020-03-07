@@ -6,29 +6,43 @@
 
 #include "GCoroutines.h"
 #include <cstring>
+#include <functional>
+#include <csetjmp> 
+#include <cstdint>
 
-void _trace( const char *file, int line, const char *sformat, const char *uformat, ... )
+using namespace std;
+
+function< void(const char *) >  _gcoroutines_logger = [](const char *message)
+{
+    Serial.println(message); 
+    delay(100);
+};
+
+void gcoroutines_set_logger( function< void(const char *) > logger )
+{
+    _gcoroutines_logger = logger;
+}
+
+void _gcoroutines_trace( const char *file, int line, const char *sformat, const char *uformat, ... )
 {
     va_list args;
     va_start( args, uformat );
-    char buf[256];
-    snprintf( buf, sizeof(buf), sformat, file, line );
-    int l = strlen(buf);
-    vsnprintf( buf+l, sizeof(buf)-l, uformat, args );
-    buf[sizeof(buf)-1] = '\0';
-    Serial.println(buf); // @TODO make this user-replaceable
-    delay(100);
+    char message[256];
+    snprintf( message, sizeof(message), sformat, file, line );
+    int l = strlen(message);
+    vsnprintf( message+l, sizeof(message)-l, uformat, args );
+    message[sizeof(message)-1] = '\0';
+    _gcoroutines_logger(message);
     va_end( args );
 }
 
-#define TRACE( ARGS... ) do { _trace( __FILE__, __LINE__, "%s:%d ", ARGS); } while(0)
-#define FAIL( ARGS... ) do { _trace( __FILE__, __LINE__, "Failed at %s:%d ", ARGS); abort(); } while(0)
+#define TRACE( ARGS... ) do { _gcoroutines_trace( __FILE__, __LINE__, "%s:%d ", ARGS); } while(0)
+#define FAIL( ARGS... ) do { _gcoroutines_trace( __FILE__, __LINE__, "Failed at %s:%d ", ARGS); abort(); } while(0)
 #define ASSERT( COND, ARGS... ) do { if(!(COND)) FAIL(ARGS); } while(0)
 
 // @TODO deal with wanings this generates
 #define GCO_MAGIC 'GCo'
 
-using namespace std;
 
 #if defined(__arm__) || defined(__thumb__)
 
@@ -189,6 +203,7 @@ void GCoroutine::run_iteration()
         
 void GCoroutine::yield()
 {
+    //TRACE("yield");
     // @TODO check we're in the correct stack. If not then (a) we're the
     // wrong child or (b) we overflowed or underflowed. Using r9 to track 
     // current child could prevent (a) and guard/fence zones could detect (b)

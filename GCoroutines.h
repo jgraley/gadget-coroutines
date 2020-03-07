@@ -13,6 +13,7 @@
 	
 /// @TODO require C++11
 
+void gcoroutines_set_logger( std::function< void(const char *) > logger );
 
 class GCoroutine
 {
@@ -25,7 +26,7 @@ public:
     void run_iteration();
     void yield();
 
-//private:
+private:
     enum ChildStatus
     {
         READY,
