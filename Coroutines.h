@@ -1,10 +1,10 @@
 /*
-  GCoroutines.h - Coroutines for Gadgets.
+  Coroutines.h - Coroutines for Gadgets.
   Created by John Graley, 2020.
   (C) John Graley LGPL license applies.
 */
-#ifndef GCoroutines_h
-#define GCoroutines_h
+#ifndef Coroutines_h
+#define Coroutines_h
 
 #include "Arduino.h"
 #include <functional>
@@ -17,17 +17,17 @@
 
 void gcoroutines_set_logger( std::function< void(const char *) > logger );
 
-class GCoroutine
+class Coroutine
 {
 public:
     typedef uint8_t byte;
 
-    explicit GCoroutine( std::function<void()> child_main_function_ ); 
-    ~GCoroutine();
+    explicit Coroutine( std::function<void()> child_main_function_ ); 
+    ~Coroutine();
     
     void run_iteration();
     inline static void yield();
-    inline static GCoroutine *get_current();
+    inline static Coroutine *get_current();
 
 private:
     enum ChildStatus

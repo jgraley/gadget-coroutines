@@ -1,10 +1,10 @@
 /*
-  GCoroutines.h - Coroutines for Gadgets.
+  Coroutines.h - Coroutines for Gadgets.
   Created by John Graley, 2020.
   (C) John Graley LGPL license applies.
 */
 
-#include "GCoroutines.h"
+#include "Coroutines.h"
 #include <cstring>
 #include <functional>
 #include <csetjmp> 
@@ -15,7 +15,7 @@
 // TODO micros() in log
 // TODO tabs in log based on cls
 // TODO trim __file__ in logs
-// TODO GCoroutine(s) -> Coroutine(s)
+// TODO Coroutine(s) -> Coroutine(s)
 
 using namespace std;
 
@@ -115,7 +115,7 @@ enum
 };
 
 
-GCoroutine::GCoroutine( function<void()> child_main_function_ ) :
+Coroutine::Coroutine( function<void()> child_main_function_ ) :
     magic( GCO_MAGIC ),
     child_main_function( child_main_function_ ),
     stack_size( default_stack_size ),
@@ -150,7 +150,7 @@ GCoroutine::GCoroutine( function<void()> child_main_function_ ) :
         case PARENT_TO_CHILD_STARTING:
         {
             // Warning: no this pointer
-            GCoroutine * const that = get_current();
+            Coroutine * const that = get_current();
             ASSERT( that, "still in baseline" );
             that->start_child();            
         }
@@ -162,7 +162,7 @@ GCoroutine::GCoroutine( function<void()> child_main_function_ ) :
     }
 }
 
-GCoroutine::~GCoroutine()
+Coroutine::~Coroutine()
 {
     ASSERT( magic==GCO_MAGIC, "bad this pointer or object corrupted: %p", this );
     ASSERT( child_status == COMPLETE, "destruct when child was not complete, status %d", static_cast<int>(child_status) );
@@ -170,7 +170,7 @@ GCoroutine::~GCoroutine()
 }
 
         
-[[ noreturn ]] void GCoroutine::start_child()
+[[ noreturn ]] void Coroutine::start_child()
 {
     ASSERT( magic==GCO_MAGIC, "bad this pointer or object corrupted: %p", this ); 
     child_status = RUNNING;
@@ -186,7 +186,7 @@ GCoroutine::~GCoroutine()
 }
 
 
-void GCoroutine::run_iteration()
+void Coroutine::run_iteration()
 {
     TRACE("initial cls %p", get_cls());
     ASSERT( magic==GCO_MAGIC, "bad this pointer or object corrupted: %p", this );
@@ -228,15 +228,15 @@ void GCoroutine::run_iteration()
 }        
         
         
-void GCoroutine::yield()
+void Coroutine::yield()
 {
-    GCoroutine * const that = get_current();
+    Coroutine * const that = get_current();
     if( that )
         that->yield_ns();
 }
 
 
-void GCoroutine::yield_ns()
+void Coroutine::yield_ns()
 {
     ASSERT( magic==GCO_MAGIC, "bad this pointer or object corrupted: %p", this );
     // @TODO guard/fence zones to detect overflow (we cannot be in wrong stack now we're
@@ -264,7 +264,7 @@ void GCoroutine::yield_ns()
 }
 
 
-GCoroutine *GCoroutine::get_current()
+Coroutine *Coroutine::get_current()
 {
-    return static_cast<GCoroutine *>(get_cls());
+    return static_cast<Coroutine *>(get_cls());
 }

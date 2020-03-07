@@ -1,6 +1,6 @@
-#include "GCoroutines.h"
+#include "Coroutines.h"
 
-GCoroutine led_flasher( []()
+Coroutine led_flasher( []()
 {
   while(1)
   {
@@ -9,7 +9,7 @@ GCoroutine led_flasher( []()
       digitalWrite(13, LOW);    // turn the LED off by making the voltage LOW
       delay(500);               // wait for a second
       Serial.println("Tock!!");
-      GCoroutine::yield(); 
+      Coroutine::yield(); 
   }
 } );
 
@@ -27,4 +27,4 @@ void loop() {
 }
 
 // Include at end to catch unexpected dependencies
-#include "GCoroutines.cpp"
+#include "Coroutines.cpp"
