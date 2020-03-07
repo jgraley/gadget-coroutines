@@ -36,7 +36,7 @@ private:
     
     [[ noreturn ]] void start_child();
 
-    const int magic;
+    const uint32_t magic;
     void (* const child_main_function)(GCoroutine *);
     const int stack_size;
     byte * const child_stack_memory;

@@ -40,8 +40,13 @@ void _gcoroutines_trace( const char *file, int line, const char *sformat, const 
 #define FAIL( ARGS... ) do { _gcoroutines_trace( __FILE__, __LINE__, "Failed at %s:%d ", ARGS); abort(); } while(0)
 #define ASSERT( COND, ARGS... ) do { if(!(COND)) FAIL(ARGS); } while(0)
 
-// @TODO deal with wanings this generates
-#define GCO_MAGIC 'GCo'
+constexpr uint32_t make_magic_le(const char *str)
+{
+    return str[0] | (str[1]<<8) | (str[2]<<16) | (str[3]<<24);
+}
+
+#define LE_CHR(a,b,c,d) (  )
+static const uint32_t GCO_MAGIC = make_magic_le("GCo1");
 
 
 #if defined(__arm__) || defined(__thumb__)
