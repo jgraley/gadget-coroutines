@@ -8,7 +8,7 @@
 
 #include "Arduino.h"
 #include <functional>
-#include <csetjmp> /// @TODO use std::any to break dependency
+#include <csetjmp> 
 #include <cstdint>
 	
 /// @TODO require C++11
