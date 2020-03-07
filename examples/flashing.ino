@@ -29,7 +29,7 @@ void setup() {
 void loop() {
   delay(154);
   Serial.println("Tick!!");
-  led_flasher.run_iteration();
+  led_flasher();
 }
 
 // Include at end to catch unexpected dependencies

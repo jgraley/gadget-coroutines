@@ -181,7 +181,7 @@ Coroutine::~Coroutine()
 }
 
 
-void Coroutine::run_iteration()
+void Coroutine::operator()()
 {
     //FAIL("hi there");
     ASSERT( magic==GCO_MAGIC, "bad this pointer or object corrupted: %p", this );

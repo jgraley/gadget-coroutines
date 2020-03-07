@@ -25,7 +25,7 @@ public:
     explicit Coroutine( std::function<void()> child_main_function_ ); 
     ~Coroutine();
     
-    void run_iteration();
+    void operator()();
     inline static void yield();
     inline static Coroutine *get_current();
 
