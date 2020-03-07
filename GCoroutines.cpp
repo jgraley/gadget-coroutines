@@ -14,6 +14,7 @@
 // TODO wait() on lambda with timeout object
 // TODO micros() in log
 // TODO tabs in log based on cls
+// TODO trim __file__ in logs
 // TODO GCoroutine(s) -> Coroutine(s)
 
 using namespace std;
@@ -92,7 +93,18 @@ inline void *get_cls()
     asm( "mov %[result], r9" : [result] "=r" (cls) : : );
     return cls;
 }
+inline void set_cls( void *cls )
+{
+    asm( "mov r9, %[value]" : : [value] "r" (cls) : );
+}
 #endif
+
+
+
+void __attribute__ ((constructor)) init_baseline_cls()
+{
+    set_cls( nullptr );
+}
 
 enum
 {
@@ -109,7 +121,7 @@ GCoroutine::GCoroutine( function<void()> child_main_function_ ) :
     stack_size( default_stack_size ),
     child_stack_memory( new byte[stack_size] ),
     child_status(READY)
-{
+{    
     byte *frame_pointer = static_cast<byte *>( get_frame_address() );
     jmp_buf initial_jmp_buf;
     int val;
@@ -117,7 +129,7 @@ GCoroutine::GCoroutine( function<void()> child_main_function_ ) :
     { 
         case IMMEDIATE:
         {
-            // Get current stack pointer and frame address @TODO bring this bit out into its own function
+            // Get current stack pointer and frame address 
             // taking care that it will have a different stack frame
             byte *stack_pointer = static_cast<byte *>( get_jmp_buf_sp(initial_jmp_buf) );            
             
@@ -138,7 +150,8 @@ GCoroutine::GCoroutine( function<void()> child_main_function_ ) :
         case PARENT_TO_CHILD_STARTING:
         {
             // Warning: no this pointer
-            GCoroutine * const that = static_cast<GCoroutine *>(get_cls());
+            GCoroutine * const that = get_current();
+            ASSERT( that, "still in baseline" );
             that->start_child();            
         }
         default:
@@ -151,6 +164,7 @@ GCoroutine::GCoroutine( function<void()> child_main_function_ ) :
 
 GCoroutine::~GCoroutine()
 {
+    ASSERT( magic==GCO_MAGIC, "bad this pointer or object corrupted: %p", this );
     ASSERT( child_status == COMPLETE, "destruct when child was not complete, status %d", static_cast<int>(child_status) );
     delete[] child_stack_memory;
 }
@@ -158,7 +172,7 @@ GCoroutine::~GCoroutine()
         
 [[ noreturn ]] void GCoroutine::start_child()
 {
-    ASSERT( magic==GCO_MAGIC, "bad this pointer or object corrupted: %p", this ); // @TODO many more of these checks
+    ASSERT( magic==GCO_MAGIC, "bad this pointer or object corrupted: %p", this ); 
     child_status = RUNNING;
     
     // Invoke the child. We take the view that this is enough to give
@@ -174,6 +188,8 @@ GCoroutine::~GCoroutine()
 
 void GCoroutine::run_iteration()
 {
+    TRACE("initial cls %p", get_cls());
+    ASSERT( magic==GCO_MAGIC, "bad this pointer or object corrupted: %p", this );
     int val;
     switch( val = setjmp(parent_jmp_buf) )
     {                    
@@ -193,7 +209,7 @@ void GCoroutine::run_iteration()
                 }
                 case COMPLETE:
                 {
-                    return; // TODO get the stored completed message
+                    return; 
                 }
             }   
         }
@@ -201,7 +217,7 @@ void GCoroutine::run_iteration()
         case CHILD_TO_PARENT:
         {
             // Warning: no this pointer
-            return; // TODO child's stored waiting or completed message
+            return; 
         }
                     
         default:
@@ -214,18 +230,24 @@ void GCoroutine::run_iteration()
         
 void GCoroutine::yield()
 {
-    GCoroutine * const that = static_cast<GCoroutine *>(get_cls());
-    // @TODO check we're in the correct stack. If not then (a) we're the
-    // wrong child or (b) we overflowed or underflowed. Using r9 to track 
-    // current child could prevent (a) and guard/fence zones could detect (b)
-    // Think on...
+    GCoroutine * const that = get_current();
+    if( that )
+        that->yield_ns();
+}
+
+
+void GCoroutine::yield_ns()
+{
+    ASSERT( magic==GCO_MAGIC, "bad this pointer or object corrupted: %p", this );
+    // @TODO guard/fence zones to detect overflow (we cannot be in wrong stack now we're
+    // using cls).
     int val;
-    switch( val = setjmp( that->child_jmp_buf ) )
+    switch( val = setjmp( child_jmp_buf ) )
     {                    
         case IMMEDIATE:
         {
             // Run the main routine
-            longjmp( that->parent_jmp_buf, CHILD_TO_PARENT );
+            longjmp( parent_jmp_buf, CHILD_TO_PARENT );
             // No break required: longjump does not return
         }
         case PARENT_TO_CHILD:
@@ -239,4 +261,10 @@ void GCoroutine::yield()
             FAIL("unexpected longjmp value: %d", val);
         }
     }    
+}
+
+
+GCoroutine *GCoroutine::get_current()
+{
+    return static_cast<GCoroutine *>(get_cls());
 }

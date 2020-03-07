@@ -11,7 +11,9 @@
 #include <csetjmp> 
 #include <cstdint>
 	
-/// @TODO require C++11
+#if __cplusplus <= 199711L
+  #error This library needs at least a C++11 compliant compiler
+#endif
 
 void gcoroutines_set_logger( std::function< void(const char *) > logger );
 
@@ -24,7 +26,8 @@ public:
     ~GCoroutine();
     
     void run_iteration();
-    static void yield();
+    inline static void yield();
+    inline static GCoroutine *get_current();
 
 private:
     enum ChildStatus
@@ -35,6 +38,7 @@ private:
     };
     
     [[ noreturn ]] void start_child();
+    void yield_ns();
 
     const uint32_t magic;
     std::function<void()> child_main_function;
