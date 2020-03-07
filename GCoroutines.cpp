@@ -103,7 +103,7 @@ enum
 };
 
 
-GCoroutine::GCoroutine( void (*child_main_function_)(GCoroutine *) ) :
+GCoroutine::GCoroutine( void (*child_main_function_)() ) :
     magic( GCO_MAGIC ),
     child_main_function( child_main_function_ ),
     stack_size( default_stack_size ),
@@ -163,7 +163,7 @@ GCoroutine::~GCoroutine()
     
     // Invoke the child. We take the view that this is enough to give
     // it its first "timeslice"
-    (*child_main_function)(this);
+    (*child_main_function)();
     
     // If we get here, child returned without yielding (i.e. like a normal function).
     child_status = COMPLETE;
@@ -214,18 +214,18 @@ void GCoroutine::run_iteration()
         
 void GCoroutine::yield()
 {
-    //TRACE("yield");
+    GCoroutine * const that = static_cast<GCoroutine *>(get_cls());
     // @TODO check we're in the correct stack. If not then (a) we're the
     // wrong child or (b) we overflowed or underflowed. Using r9 to track 
     // current child could prevent (a) and guard/fence zones could detect (b)
     // Think on...
     int val;
-    switch( val = setjmp(child_jmp_buf) )
+    switch( val = setjmp( that->child_jmp_buf ) )
     {                    
         case IMMEDIATE:
         {
             // Run the main routine
-            longjmp(parent_jmp_buf, CHILD_TO_PARENT);
+            longjmp( that->parent_jmp_buf, CHILD_TO_PARENT );
             // No break required: longjump does not return
         }
         case PARENT_TO_CHILD:
@@ -240,11 +240,3 @@ void GCoroutine::yield()
         }
     }    
 }
-
-void co_yield()
-{
-    GCoroutine * const that = static_cast<GCoroutine *>(get_cls());
-    TRACE("cls=%p", that);
-    that->yield();
-}
-

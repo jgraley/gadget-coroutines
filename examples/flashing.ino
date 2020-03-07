@@ -1,6 +1,6 @@
 #include "GCoroutines.h"
 
-void led_flasher_main(GCoroutine *gc)
+void led_flasher_main()
 {
   while(1)
   {
@@ -9,7 +9,7 @@ void led_flasher_main(GCoroutine *gc)
       digitalWrite(13, LOW);    // turn the LED off by making the voltage LOW
       delay(500);               // wait for a second
       Serial.println("Tock!!");
-      gc->yield(); // @TODO call a global function that uses cls to get to the object
+      GCoroutine::yield(); 
   }
 }
 

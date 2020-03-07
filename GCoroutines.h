@@ -20,11 +20,11 @@ class GCoroutine
 public:
     typedef uint8_t byte;
 
-    explicit GCoroutine( void (*child_main_function_)(GCoroutine *) ); // @TODO back to std::function if possible @TODO if we can use cls effectively, no need for the GCoroutine * argument
+    explicit GCoroutine( void (*child_main_function_)() ); // @TODO back to std::function if possible @TODO if we can use cls effectively, no need for the GCoroutine * argument
     ~GCoroutine();
     
     void run_iteration();
-    void yield();
+    static void yield();
 
 private:
     enum ChildStatus
@@ -37,7 +37,7 @@ private:
     [[ noreturn ]] void start_child();
 
     const uint32_t magic;
-    void (* const child_main_function)(GCoroutine *);
+    void (* const child_main_function)();
     const int stack_size;
     byte * const child_stack_memory;
     ChildStatus child_status;
