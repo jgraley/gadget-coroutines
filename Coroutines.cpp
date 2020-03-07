@@ -15,7 +15,10 @@ using namespace std;
 function< void(const char *) >  _gcoroutines_logger = [](const char *message)
 {
     Serial.println(message); 
+#ifndef ARDUINO_YIELD_INTEGRATION
+    // When we integrate, delay() will call yield() and we may re-enter
     delay(100);
+#endif
 };
 
 void gcoroutines_set_logger( function< void(const char *) > logger )
@@ -180,6 +183,7 @@ Coroutine::~Coroutine()
 
 void Coroutine::run_iteration()
 {
+    //FAIL("hi there");
     ASSERT( magic==GCO_MAGIC, "bad this pointer or object corrupted: %p", this );
     int val;
     switch( val = setjmp(parent_jmp_buf) )
@@ -257,3 +261,17 @@ Coroutine *Coroutine::get_current()
 {
     return static_cast<Coroutine *>(get_cls());
 }
+
+#ifdef ARDUINO_YIELD_INTEGRATION
+
+#include "Arduino.h"
+extern  "C" void yield(void)
+{
+#if defined(USE_TINYUSB)
+  tud_task();
+  tud_cdc_write_flush();
+#endif
+  Coroutine::yield(); 
+}
+
+#endif

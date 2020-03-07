@@ -1,3 +1,5 @@
+#define ARDUINO_YIELD_INTEGRATION
+
 #include "Coroutines.h"
 
 Coroutine led_flasher( []()
@@ -9,7 +11,10 @@ Coroutine led_flasher( []()
       digitalWrite(13, LOW);    // turn the LED off by making the voltage LOW
       delay(500);               // wait for a second
       Serial.println("Tock!!");
+#ifndef ARDUINO_YIELD_INTEGRATION
+      // With Arduino integration, delay() is doing the yielding for us (as well as keeping TinyUSB happy)
       Coroutine::yield(); 
+#endif
   }
 } );
 
@@ -22,7 +27,7 @@ void setup() {
 
 // the loop function runs over and over again forever
 void loop() {
-  delay(467);
+  delay(154);
   Serial.println("Tick!!");
   led_flasher.run_iteration();
 }
