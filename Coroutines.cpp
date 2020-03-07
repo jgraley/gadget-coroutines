@@ -45,7 +45,6 @@ constexpr uint32_t make_magic_le(const char *str)
     return str[0] | (str[1]<<8) | (str[2]<<16) | (str[3]<<24);
 }
 
-#define LE_CHR(a,b,c,d) (  )
 static const uint32_t GCO_MAGIC = make_magic_le("GCo1");
 
 
@@ -181,7 +180,6 @@ Coroutine::~Coroutine()
 
 void Coroutine::run_iteration()
 {
-    TRACE("initial cls %p", get_cls());
     ASSERT( magic==GCO_MAGIC, "bad this pointer or object corrupted: %p", this );
     int val;
     switch( val = setjmp(parent_jmp_buf) )
