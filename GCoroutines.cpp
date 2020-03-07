@@ -104,6 +104,7 @@ GCoroutine::GCoroutine( void (*child_main_function_)(GCoroutine *) ) :
     child_stack_memory( new byte[stack_size] ),
     child_status(READY)
 {
+    byte *frame_pointer = static_cast<byte *>( get_frame_address() );
     jmp_buf initial_jmp_buf;
     int val;
     switch( val = setjmp(initial_jmp_buf) )
@@ -112,20 +113,19 @@ GCoroutine::GCoroutine( void (*child_main_function_)(GCoroutine *) ) :
         {
             // Get current stack pointer and frame address @TODO bring this bit out into its own function
             // taking care that it will have a different stack frame
-            byte *stack_pointer = static_cast<byte *>( get_jmp_buf_sp(initial_jmp_buf) );
-            byte *frame_start_pointer = static_cast<byte *>( get_frame_address() );
+            byte *stack_pointer = static_cast<byte *>( get_jmp_buf_sp(initial_jmp_buf) );            
             
             // Decide how much stack to keep (basically the current frame, i.e. the 
             // stack frame of this invocation of this function) and copy it into the 
             // new stack, at the bottom.
             // Note: stacks usually begin at the highest address and work down
-            int bytes_to_retain = frame_start_pointer - stack_pointer;
-            byte *new_stack_pointer = child_stack_memory + stack_size - bytes_to_retain;      
-            memmove( new_stack_pointer, stack_pointer, bytes_to_retain );
+            int bytes_to_retain = frame_pointer - stack_pointer;
+            byte *child_stack_pointer = child_stack_memory + stack_size - bytes_to_retain;      
+            memmove( child_stack_pointer, stack_pointer, bytes_to_retain );
             
             // Prepare a jump buffer for the child and point it to the new stack
             memcpy( &child_jmp_buf, &initial_jmp_buf, sizeof(jmp_buf) );
-            set_jmp_buf_sp(child_jmp_buf, new_stack_pointer);
+            set_jmp_buf_sp(child_jmp_buf, child_stack_pointer);
             set_jmp_buf_cls(child_jmp_buf, this);
             break;
         }

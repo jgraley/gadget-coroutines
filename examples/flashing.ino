@@ -1,4 +1,3 @@
-#include "GCoroutines.cpp"
 #include "GCoroutines.h"
 
 void led_flasher_main(GCoroutine *gc)
@@ -27,3 +26,6 @@ void setup() {
 void loop() {
   led_flasher.run_iteration();
 }
+
+// Include at end to catch unexpected dependencies
+#include "GCoroutines.cpp"
