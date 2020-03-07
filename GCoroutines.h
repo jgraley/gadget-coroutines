@@ -20,7 +20,7 @@ class GCoroutine
 public:
     typedef uint8_t byte;
 
-    explicit GCoroutine( void (*child_main_function_)() ); // @TODO back to std::function if possible @TODO if we can use cls effectively, no need for the GCoroutine * argument
+    explicit GCoroutine( std::function<void()> child_main_function_ ); 
     ~GCoroutine();
     
     void run_iteration();
@@ -37,7 +37,7 @@ private:
     [[ noreturn ]] void start_child();
 
     const uint32_t magic;
-    void (* const child_main_function)();
+    std::function<void()> child_main_function;
     const int stack_size;
     byte * const child_stack_memory;
     ChildStatus child_status;

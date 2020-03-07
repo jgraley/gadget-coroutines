@@ -103,7 +103,7 @@ enum
 };
 
 
-GCoroutine::GCoroutine( void (*child_main_function_)() ) :
+GCoroutine::GCoroutine( function<void()> child_main_function_ ) :
     magic( GCO_MAGIC ),
     child_main_function( child_main_function_ ),
     stack_size( default_stack_size ),
@@ -163,7 +163,7 @@ GCoroutine::~GCoroutine()
     
     // Invoke the child. We take the view that this is enough to give
     // it its first "timeslice"
-    (*child_main_function)();
+    child_main_function();
     
     // If we get here, child returned without yielding (i.e. like a normal function).
     child_status = COMPLETE;

@@ -1,6 +1,6 @@
 #include "GCoroutines.h"
 
-void led_flasher_main()
+GCoroutine led_flasher( []()
 {
   while(1)
   {
@@ -11,9 +11,7 @@ void led_flasher_main()
       Serial.println("Tock!!");
       GCoroutine::yield(); 
   }
-}
-
-GCoroutine led_flasher( led_flasher_main );
+} );
 
 // the setup function runs once when you press reset or power the board
 void setup() {
