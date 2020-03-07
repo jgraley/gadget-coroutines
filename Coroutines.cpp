@@ -10,13 +10,6 @@
 #include <csetjmp> 
 #include <cstdint>
 
-// TODO integrate with wiringpi yeild()
-// TODO wait() on lambda with timeout object
-// TODO micros() in log
-// TODO tabs in log based on cls
-// TODO trim __file__ in logs
-// TODO Coroutine(s) -> Coroutine(s)
-
 using namespace std;
 
 function< void(const char *) >  _gcoroutines_logger = [](const char *message)
@@ -239,8 +232,6 @@ void Coroutine::yield()
 void Coroutine::yield_ns()
 {
     ASSERT( magic==GCO_MAGIC, "bad this pointer or object corrupted: %p", this );
-    // @TODO guard/fence zones to detect overflow (we cannot be in wrong stack now we're
-    // using cls).
     int val;
     switch( val = setjmp( child_jmp_buf ) )
     {                    
