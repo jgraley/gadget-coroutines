@@ -13,16 +13,22 @@ void TC3_Handler();
 
 bool isLEDOn = false;
 
+void wait_next_TC3_MC0()
+{
+    TcCount16* TC = (TcCount16*) TC3;
+    TC->INTFLAG.bit.MC0 = 1;
+    Coroutine::yield(); 
+}
+
 Coroutine led_flasher([]()
 {
   while(1)
   {
-    TcCount16* TC = (TcCount16*) TC3;
-    TC->INTFLAG.bit.MC0 = 1;
     // Write callback here!!!
     digitalWrite(LED_PIN, isLEDOn);
     isLEDOn = !isLEDOn;
-    Coroutine::yield(); 
+
+    wait_next_TC3_MC0();
   }
 });
 
