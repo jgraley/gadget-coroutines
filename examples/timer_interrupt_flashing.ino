@@ -1,5 +1,7 @@
 // JSG Note: This file taken from https://gist.github.com/jdneo/43be30d85080b175cb5aed3500d3f989
 
+#include "Coroutines.h"
+
 #define LED_PIN 13
 
 #define CPU_HZ 48000000
@@ -10,6 +12,24 @@ void setTimerFrequency(int frequencyHz);
 void TC3_Handler();
 
 bool isLEDOn = false;
+
+Coroutine led_flasher([]()
+{
+  while(1)
+  {
+    TcCount16* TC = (TcCount16*) TC3;
+    // If this interrupt is due to the compare register matching the timer count
+    // we toggle the LED.
+    if (TC->INTFLAG.bit.MC0 == 1) {
+      TC->INTFLAG.bit.MC0 = 1;
+      // Write callback here!!!
+      digitalWrite(LED_PIN, isLEDOn);
+      isLEDOn = !isLEDOn;
+    }
+    Coroutine::yield(); 
+  }
+});
+
 
 void setup() {
   pinMode(LED_PIN, OUTPUT);
@@ -64,13 +84,8 @@ void startTimer(int frequencyHz) {
 }
 
 void TC3_Handler() {
-  TcCount16* TC = (TcCount16*) TC3;
-  // If this interrupt is due to the compare register matching the timer count
-  // we toggle the LED.
-  if (TC->INTFLAG.bit.MC0 == 1) {
-    TC->INTFLAG.bit.MC0 = 1;
-    // Write callback here!!!
-    digitalWrite(LED_PIN, isLEDOn);
-    isLEDOn = !isLEDOn;
-  }
+  led_flasher();
 }
+
+// Include at end to catch unexpected dependencies
+#include "Coroutines.cpp"
