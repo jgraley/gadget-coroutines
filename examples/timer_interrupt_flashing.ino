@@ -16,6 +16,8 @@ bool isLEDOn = false;
 void wait_next_TC3_MC0()
 {
     TcCount16* TC = (TcCount16*) TC3;
+
+    // TODO should these be atomic?
     TC->INTFLAG.bit.MC0 = 1;
     Coroutine::yield(); 
 }
@@ -29,6 +31,12 @@ Coroutine led_flasher([]()
     isLEDOn = !isLEDOn;
 
     wait_next_TC3_MC0();
+
+    // Write callback here!!!
+    digitalWrite(LED_PIN, isLEDOn);
+    isLEDOn = !isLEDOn;
+
+    wait_next_TC3_MC0();    
   }
 });
 
