@@ -18,14 +18,10 @@ Coroutine led_flasher([]()
   while(1)
   {
     TcCount16* TC = (TcCount16*) TC3;
-    // If this interrupt is due to the compare register matching the timer count
-    // we toggle the LED.
-    if (TC->INTFLAG.bit.MC0 == 1) {
-      TC->INTFLAG.bit.MC0 = 1;
-      // Write callback here!!!
-      digitalWrite(LED_PIN, isLEDOn);
-      isLEDOn = !isLEDOn;
-    }
+    TC->INTFLAG.bit.MC0 = 1;
+    // Write callback here!!!
+    digitalWrite(LED_PIN, isLEDOn);
+    isLEDOn = !isLEDOn;
     Coroutine::yield(); 
   }
 });
