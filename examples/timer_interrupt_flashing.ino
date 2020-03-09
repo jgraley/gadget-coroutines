@@ -11,8 +11,6 @@ void startTimer(int frequencyHz);
 void setTimerFrequency(int frequencyHz);
 void TC3_Handler();
 
-bool isLEDOn = false;
-
 void wait_next_TC3_MC0()
 {
     TcCount16* TC = (TcCount16*) TC3;
@@ -26,15 +24,11 @@ Coroutine led_flasher([]()
 {
   while(1)
   {
-    // Write callback here!!!
-    digitalWrite(LED_PIN, isLEDOn);
-    isLEDOn = !isLEDOn;
+    digitalWrite(LED_PIN, false);
 
     wait_next_TC3_MC0();
 
-    // Write callback here!!!
-    digitalWrite(LED_PIN, isLEDOn);
-    isLEDOn = !isLEDOn;
+    digitalWrite(LED_PIN, true);
 
     wait_next_TC3_MC0();    
   }
