@@ -31,6 +31,3 @@ void loop() {
   Serial.println("Tick!!");
   led_flasher();
 }
-
-// Include at end to catch unexpected dependencies
-#include "Coroutines.cpp"
