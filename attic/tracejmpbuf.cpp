@@ -1,0 +1,11 @@
+  delay(1000);
+  TRACE("child_stack_memory, this=%p, %p", child_stack_memory, this);
+  int *c=child_jmp_buf+0;
+  delay(1000);
+  TRACE("child_jmp_buf[0:8]=%p, %p, %p, %p, %p, %p, %p, %p", c[0], c[1], c[2], c[3], c[4], c[5], c[6], c[7]);
+  c=child_jmp_buf+8;
+  delay(1000);
+  TRACE("child_jmp_buf[8:16]=%p, %p, %p, %p, %p, %p, %p, %p", c[0], c[1], c[2], c[3], c[4], c[5], c[6], c[7]); 
+  c=child_jmp_buf+16;
+  delay(1000);
+  TRACE("child_jmp_buf[16:23]=%p, %p, %p, %p, %p, %p, %p", c[0], c[1], c[2], c[3], c[4], c[5], c[6]);  

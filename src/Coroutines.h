@@ -37,6 +37,9 @@ private:
     COMPLETE
   };
     
+  byte *prepare_child_stack( byte *frame_pointer, byte *stack_pointer );
+  void prepare_child_jmp_buf(jmp_buf initial_jmp_buf, byte *child_stack_pointer );
+  
   [[ noreturn ]] void start_child();
   void yield_nonstatic();
 

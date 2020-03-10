@@ -61,6 +61,7 @@ static_assert( sizeof(int) == sizeof(void *) );
 static_assert( sizeof(jmp_buf) == sizeof(int[23]) );
 
 static const int ARM_JMPBUF_INDEX_SP = 8;
+static const int ARM_JMPBUF_INDEX_CLS = 5;
 
 inline void *get_jmp_buf_sp( jmp_buf env )
 {
@@ -77,16 +78,14 @@ inline void *get_frame_address()
   return reinterpret_cast<void *>( __builtin_frame_address(0) );
 }
 
-static const int ARM_JMPBUF_INDEX_TLS = 5;
-
 inline void *get_jmp_buf_cls( jmp_buf env )
 {
-  return reinterpret_cast<byte *>( env[ARM_JMPBUF_INDEX_TLS] );
+  return reinterpret_cast<byte *>( env[ARM_JMPBUF_INDEX_CLS] );
 }
 
 inline void set_jmp_buf_cls( jmp_buf env, void *new_cls )
 {
-  env[ARM_JMPBUF_INDEX_TLS] = reinterpret_cast<int>(new_cls);
+  env[ARM_JMPBUF_INDEX_CLS] = reinterpret_cast<int>(new_cls);
 }
 
 inline void *get_cls()
@@ -116,6 +115,10 @@ enum LongJmpValue
 };
 
 
+void f()
+{
+}
+
 Coroutine::Coroutine( function<void()> child_main_function_ ) :
   magic( GCO_MAGIC ),
   child_main_function( child_main_function_ ),
@@ -123,27 +126,20 @@ Coroutine::Coroutine( function<void()> child_main_function_ ) :
   child_stack_memory( new byte[stack_size] ),
   child_status(READY)
 {    
-  byte *frame_pointer = (byte *)( get_frame_address() );
   jmp_buf initial_jmp_buf;
   int val;
   switch( val = setjmp(initial_jmp_buf) ) { 
     case IMMEDIATE: {
       // Get current stack pointer and frame address 
       // taking care that it will have a different stack frame
-      byte *stack_pointer = (byte *)( get_jmp_buf_sp(initial_jmp_buf) );            
-         
-      // Decide how much stack to keep (basically the current frame, i.e. the 
-      // stack frame of this invocation of this function) and copy it into the 
-      // new stack, at the bottom.
-      // Note: stacks usually begin at the highest address and work down
-      int bytes_to_retain = frame_pointer - stack_pointer;
-      byte *child_stack_pointer = child_stack_memory + stack_size - bytes_to_retain;      
-      memmove( child_stack_pointer, stack_pointer, bytes_to_retain );
-            
-      // Prepare a jump buffer for the child and point it to the new stack
-      memcpy( &child_jmp_buf, &initial_jmp_buf, sizeof(jmp_buf) );
-      set_jmp_buf_sp(child_jmp_buf, child_stack_pointer);
-      set_jmp_buf_cls(child_jmp_buf, this);
+      byte *frame_pointer = (byte *)( get_frame_address() );
+      byte *stack_pointer = (byte *)( get_jmp_buf_sp(initial_jmp_buf) );  
+      
+      // Get the child's stack ready                   
+      byte *child_stack_pointer = prepare_child_stack( frame_pointer, stack_pointer );
+      
+      // Create the child's jump buf
+      prepare_child_jmp_buf( initial_jmp_buf, child_stack_pointer );
       break;
     }
     case PARENT_TO_CHILD_STARTING: {
@@ -158,6 +154,29 @@ Coroutine::Coroutine( function<void()> child_main_function_ ) :
     }
   }
 }
+
+
+byte *Coroutine::prepare_child_stack( byte *frame_pointer, byte *stack_pointer )
+{
+  // Decide how much stack to keep (basically the current frame, i.e. the 
+  // stack frame of this invocation of this function) and copy it into the 
+  // new stack, at the bottom.
+  // Note: stacks usually begin at the highest address and work down
+  int bytes_to_retain = frame_pointer - stack_pointer;
+  byte *child_stack_pointer = child_stack_memory + stack_size - bytes_to_retain;      
+  memmove( child_stack_pointer, stack_pointer, bytes_to_retain );
+  return child_stack_pointer;
+}
+
+
+void Coroutine::prepare_child_jmp_buf( jmp_buf initial_jmp_buf, byte *child_stack_pointer )
+{
+  // Prepare a jump buffer for the child and point it to the new stack
+  memcpy( child_jmp_buf, initial_jmp_buf, sizeof(jmp_buf) );
+  set_jmp_buf_sp(child_jmp_buf, child_stack_pointer);
+  set_jmp_buf_cls(child_jmp_buf, this);
+}
+
 
 Coroutine::~Coroutine()
 {
@@ -185,7 +204,6 @@ Coroutine::~Coroutine()
 
 void Coroutine::operator()()
 {
-  //FAIL("hi there");
   ASSERT( magic==GCO_MAGIC, "bad this pointer or object corrupted: %p", this );
   int val;
   switch( val = setjmp(parent_jmp_buf) ) {                    
