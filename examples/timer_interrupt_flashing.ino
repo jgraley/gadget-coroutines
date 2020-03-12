@@ -90,6 +90,3 @@ void startTimer(int frequencyHz) {
 void TC3_Handler() {
   led_flasher();
 }
-
-// Include at end to catch unexpected dependencies
-#include "Coroutines.cpp"

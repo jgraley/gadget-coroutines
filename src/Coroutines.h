@@ -7,6 +7,7 @@
 #define Coroutines_h
 
 #include "Arduino.h"
+#include "Coroutines_ARM.h"
 #include <functional>
 #include <csetjmp> 
 #include <cstdint>
@@ -26,8 +27,8 @@ public:
   ~Coroutine();
     
   void operator()();
-  inline static void yield();
   inline static Coroutine *get_current();
+  inline static void yield();
 
 private:
   enum ChildStatus
@@ -53,5 +54,23 @@ private:
     
   static const int default_stack_size = 1024;
 };
+
+///-- 
+// Implement the inline functions here
+
+Coroutine *Coroutine::get_current()
+{
+  return (Coroutine *)( get_cls() );
+}
+
+
+void Coroutine::yield()
+{
+  Coroutine * const that = get_current();
+  if( that )
+    that->yield_nonstatic();
+}
+
+
 
 #endif
