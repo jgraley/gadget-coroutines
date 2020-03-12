@@ -1,5 +1,5 @@
 /*
-  Coroutines.h - Coroutines for Gadgets.
+  Coroutines_ARM.h - Coroutines for Gadgets.
   Created by John Graley, 2020.
   (C) John Graley LGPL license applies.
 */
@@ -8,9 +8,8 @@
 
 #include <csetjmp> 
 
-///-- 
-// Implement the inline functions here
-#if defined(__arm__) || defined(__thumb__)
+// This file contains low-level stuff for ARM only
+static_assert( __arm__==1 || __thumb__==1 );
 
 // We're assuming pointers and ints are the same size because the old
 // C library functions we use seem to assume it.
@@ -24,7 +23,7 @@ static const int ARM_JMPBUF_INDEX_CLS = 5;
 
 inline void *get_jmp_buf_sp( jmp_buf env )
 {
-  return reinterpret_cast<byte *>( env[ARM_JMPBUF_INDEX_SP] );
+  return reinterpret_cast<void *>( env[ARM_JMPBUF_INDEX_SP] );
 }
 
 inline void set_jmp_buf_sp( jmp_buf env, void *new_sp )
@@ -39,7 +38,7 @@ inline void *get_frame_address()
 
 inline void *get_jmp_buf_cls( jmp_buf env )
 {
-  return reinterpret_cast<byte *>( env[ARM_JMPBUF_INDEX_CLS] );
+  return reinterpret_cast<void *>( env[ARM_JMPBUF_INDEX_CLS] );
 }
 
 inline void set_jmp_buf_cls( jmp_buf env, void *new_cls )
@@ -58,7 +57,5 @@ inline void set_cls( void *cls )
 {
     asm( "mov r9, %[value]" : : [value] "r" (cls) : );
 }
-
-#endif
 
 #endif

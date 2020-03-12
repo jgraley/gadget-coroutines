@@ -6,12 +6,13 @@
 #ifndef Coroutines_h
 #define Coroutines_h
 
-#include "Arduino.h"
 #include "Coroutines_ARM.h"
+
 #include <functional>
 #include <csetjmp> 
 #include <cstdint>
-	
+#include "Arduino.h"
+
 #if __cplusplus <= 199711L
   #error This library needs at least a C++11 compliant compiler
 #endif
@@ -21,8 +22,6 @@ void gcoroutines_set_logger( std::function< void(const char *) > logger );
 class Coroutine
 {
 public:
-  typedef uint8_t byte;
-
   explicit Coroutine( std::function<void()> child_main_function_ ); 
   ~Coroutine();
     
@@ -70,7 +69,5 @@ void Coroutine::yield()
   if( that )
     that->yield_nonstatic();
 }
-
-
 
 #endif

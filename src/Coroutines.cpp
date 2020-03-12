@@ -1,47 +1,20 @@
 /*
-  Coroutines.h - Coroutines for Gadgets.
+  Coroutines.cpp - Coroutines for Gadgets.
   Created by John Graley, 2020.
   (C) John Graley LGPL license applies.
 */
 
 #include "Coroutines.h"
+
+#include "CoroTracing.h"
+
 #include <cstring>
 #include <functional>
 #include <csetjmp> 
 #include <cstdint>
+#include "Arduino.h"
 
 using namespace std;
-
-function< void(const char *) >  _gcoroutines_logger = [](const char *message)
-{
-  Serial.println(message); 
-#ifndef ARDUINO_YIELD_INTEGRATION
-  // When we integrate, delay() will call yield() and we may re-enter
-  delay(100);
-#endif
-};
-
-void gcoroutines_set_logger( function< void(const char *) > logger )
-{
-  _gcoroutines_logger = logger;
-}
-
-void _gcoroutines_trace( const char *file, int line, const char *sformat, const char *uformat, ... )
-{
-  va_list args;
-  va_start( args, uformat );
-  char message[256];
-  snprintf( message, sizeof(message), sformat, file, line );
-  int l = strlen(message);
-  vsnprintf( message+l, sizeof(message)-l, uformat, args );
-  message[sizeof(message)-1] = '\0';
-  _gcoroutines_logger(message);
-  va_end( args );
-}
-
-#define TRACE( ARGS... ) do { _gcoroutines_trace( __FILE__, __LINE__, "%s:%d ", ARGS); } while(0)
-#define FAIL( ARGS... ) do { _gcoroutines_trace( __FILE__, __LINE__, "Failed at %s:%d ", ARGS); abort(); } while(0)
-#define ASSERT( COND, ARGS... ) do { if(!(COND)) FAIL(ARGS); } while(0)
 
 constexpr uint32_t make_magic_le(const char *str)
 {
@@ -49,7 +22,6 @@ constexpr uint32_t make_magic_le(const char *str)
 }
 
 static const uint32_t GCO_MAGIC = make_magic_le("GCo1");
-
 
 
 void __attribute__ ((constructor)) init_baseline_cls()
@@ -65,10 +37,6 @@ enum LongJmpValue
   PARENT_TO_CHILD_STARTING = 3
 };
 
-
-void f()
-{
-}
 
 Coroutine::Coroutine( function<void()> child_main_function_ ) :
   magic( GCO_MAGIC ),
@@ -207,18 +175,3 @@ void Coroutine::yield_nonstatic()
     }
   }    
 }
-
-
-#ifdef ARDUINO_YIELD_INTEGRATION
-
-#include "Arduino.h"
-extern  "C" void yield(void)
-{
-#if defined(USE_TINYUSB)
-  tud_task();
-  tud_cdc_write_flush();
-#endif
-  Coroutine::yield(); 
-}
-
-#endif
