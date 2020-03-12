@@ -1,8 +1,8 @@
-/*
-  Coroutines.cpp - Coroutines for Gadgets.
-  Created by John Graley, 2020.
-  (C) John Graley LGPL license applies.
-*/
+/**
+ * Coroutines.cpp - Coroutines for Gadgets.
+ * Created by John Graley, 2020.
+ * (C) John Graley LGPL license applies.
+ */
 
 #include "Coroutines.h"
 
@@ -16,30 +16,9 @@
 
 using namespace std;
 
-constexpr uint32_t make_magic_le(const char *str)
-{
-  return str[0] | (str[1]<<8) | (str[2]<<16) | (str[3]<<24);
-}
-
-static const uint32_t GCO_MAGIC = make_magic_le("GCo1");
-
-
-void __attribute__ ((constructor)) init_baseline_cls()
-{
-    set_cls( nullptr );
-}
-
-enum LongJmpValue
-{
-  IMMEDIATE = 0, // Must be zero
-  PARENT_TO_CHILD = 1, // All the others must be non-zero
-  CHILD_TO_PARENT = 2,
-  PARENT_TO_CHILD_STARTING = 3
-};
-
 
 Coroutine::Coroutine( function<void()> child_main_function_ ) :
-  magic( GCO_MAGIC ),
+  magic( MAGIC ),
   child_main_function( child_main_function_ ),
   stack_size( default_stack_size ),
   child_stack_memory( new byte[stack_size] ),
@@ -99,7 +78,7 @@ void Coroutine::prepare_child_jmp_buf( jmp_buf initial_jmp_buf, byte *child_stac
 
 Coroutine::~Coroutine()
 {
-  ASSERT( magic==GCO_MAGIC, "bad this pointer or object corrupted: %p", this );
+  ASSERT( magic == MAGIC, "bad this pointer or object corrupted: %p", this );
   ASSERT( child_status == COMPLETE, "destruct when child was not complete, status %d", (int)child_status );
   delete[] child_stack_memory;
 }
@@ -107,7 +86,7 @@ Coroutine::~Coroutine()
         
 [[ noreturn ]] void Coroutine::start_child()
 {
-  ASSERT( magic==GCO_MAGIC, "bad this pointer or object corrupted: %p", this ); 
+  ASSERT( magic == MAGIC, "bad this pointer or object corrupted: %p", this ); 
   child_status = RUNNING;
     
   // Invoke the child. We take the view that this is enough to give
@@ -123,7 +102,7 @@ Coroutine::~Coroutine()
 
 void Coroutine::operator()()
 {
-  ASSERT( magic==GCO_MAGIC, "bad this pointer or object corrupted: %p", this );
+  ASSERT( magic == MAGIC, "bad this pointer or object corrupted: %p", this );
   int val;
   switch( val = setjmp(parent_jmp_buf) ) {                    
     case IMMEDIATE: {
@@ -156,7 +135,7 @@ void Coroutine::operator()()
         
 void Coroutine::yield_nonstatic()
 {
-  ASSERT( magic==GCO_MAGIC, "bad this pointer or object corrupted: %p", this );
+  ASSERT( magic == MAGIC, "bad this pointer or object corrupted: %p", this );
   ASSERT( child_status == RUNNING, "yield when child was not running, status %d", (int)child_status );
   int val;
   switch( val = setjmp( child_jmp_buf ) ) {                    
@@ -175,3 +154,13 @@ void Coroutine::yield_nonstatic()
     }
   }    
 }
+
+
+constexpr uint32_t make_magic_le(const char *str)
+{
+  return str[0] | (str[1]<<8) | (str[2]<<16) | (str[3]<<24);
+}
+
+
+const uint32_t Coroutine::MAGIC = make_magic_le("GCo1");
+

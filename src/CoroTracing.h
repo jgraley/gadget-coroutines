@@ -1,8 +1,10 @@
-/*
-  CoroTracing.cpp - Coroutines for Gadgets.
-  Created by John Graley, 2020.
-  (C) John Graley LGPL license applies.
-*/
+/**
+ * CoroTracing.cpp - Coroutines for Gadgets.
+ * Created by John Graley, 2020.
+ * (C) John Graley LGPL license applies.
+ *
+ * Tracing macros
+ */
 
 #ifndef CoroTracing_h
 #define CoroTracing_h

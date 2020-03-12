@@ -1,8 +1,10 @@
-/*
-  Coroutines.h - Coroutines for Gadgets.
-  Created by John Graley, 2020.
-  (C) John Graley LGPL license applies.
-*/
+/**
+ * Coroutines.h - Coroutines for Gadgets.
+ * Created by John Graley, 2020.
+ * (C) John Graley LGPL license applies.
+ * 
+ * Main Gadget Coroutine class
+ */
 #ifndef Coroutines_h
 #define Coroutines_h
 
@@ -36,7 +38,15 @@ private:
     RUNNING,
     COMPLETE
   };
-    
+  
+  enum LongJmpValue
+  {
+    IMMEDIATE = 0, // Must be zero
+    PARENT_TO_CHILD = 1, // All the others must be non-zero
+    CHILD_TO_PARENT = 2,
+    PARENT_TO_CHILD_STARTING = 3
+  };
+
   byte *prepare_child_stack( byte *frame_pointer, byte *stack_pointer );
   void prepare_child_jmp_buf(jmp_buf initial_jmp_buf, byte *child_stack_pointer );
   
@@ -52,6 +62,7 @@ private:
   jmp_buf child_jmp_buf;
     
   static const int default_stack_size = 1024;
+  static const uint32_t MAGIC;
 };
 
 ///-- 
