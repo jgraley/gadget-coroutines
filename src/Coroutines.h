@@ -59,7 +59,7 @@ private:
   const int stack_size;
   byte * const child_stack_memory;
   ChildStatus child_status;
-  jmp_buf parent_jmp_buf;
+  int * parent_jmp_buf_ptr;
   jmp_buf child_jmp_buf;
     
   static const int default_stack_size = 1024;

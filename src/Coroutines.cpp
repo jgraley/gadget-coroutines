@@ -105,9 +105,12 @@ void Coroutine::prepare_child_jmp_buf( const jmp_buf &initial_jmp_buf, byte *chi
 void Coroutine::operator()()
 {
   ASSERT( magic == MAGIC, "bad this pointer or object corrupted: %p", this );
+
+  jmp_buf parent_jmp_buf;
   int val;
   switch( val = setjmp(parent_jmp_buf) ) {                    
     case IMMEDIATE: {
+      parent_jmp_buf_ptr = parent_jmp_buf;
       if( child_status != COMPLETE )
         jump_to_child();
     }
@@ -164,8 +167,7 @@ void Coroutine::yield_nonstatic()
 void Coroutine::jump_to_parent()
 {
   // Make a copy of the parent jmp buf
-  jmp_buf stackable_parent_jmp_buf;
-  copy_jmp_buf( stackable_parent_jmp_buf, parent_jmp_buf );
+  int *stackable_parent_jmp_buf_ptr = parent_jmp_buf_ptr;
 
   // From here on, I believe the we can be re-entered via run_iteration().
   // The correct run_iteration calls will return in the correct order because
@@ -175,7 +177,7 @@ void Coroutine::jump_to_parent()
   // Note: we're reentrant into run_iteration() but not recursive, since
   // this is the child's context.
   
-  longjmp( stackable_parent_jmp_buf, CHILD_TO_PARENT );
+  longjmp( stackable_parent_jmp_buf_ptr, CHILD_TO_PARENT );
   // No break required: longjump does not return
 }
 
