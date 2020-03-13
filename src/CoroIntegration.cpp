@@ -17,6 +17,7 @@
 
 // This makes sure the CLS is a NULL pointer for the fore-ground
 // context (i.e. when outside any coroutine)
+// CLS is Coroutine-Local Storage
 void __attribute__ ((constructor)) init_baseline_cls()
 {
     set_cls( nullptr );
