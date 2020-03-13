@@ -49,12 +49,13 @@ private:
 
   byte *prepare_child_stack( byte *frame_pointer, byte *stack_pointer );
   void prepare_child_jmp_buf( const jmp_buf &initial_jmp_buf, byte *child_stack_pointer );
-  
   [[ noreturn ]] void start_child();
+  [[ noreturn ]] void jump_to_child();
   void yield_nonstatic();
-
+  [[ noreturn ]] void jump_to_parent();
+  
   const uint32_t magic;
-  std::function<void()> child_main_function;
+  std::function<void()> child_main_function; // @TODO try const
   const int stack_size;
   byte * const child_stack_memory;
   ChildStatus child_status;

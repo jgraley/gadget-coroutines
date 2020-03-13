@@ -14,6 +14,8 @@
 #include <cstdint>
 #include "Arduino.h"
 
+#define TEST_REENTRANCY
+
 using namespace std;
 
 
@@ -95,7 +97,7 @@ void Coroutine::prepare_child_jmp_buf( const jmp_buf &initial_jmp_buf, byte *chi
     
   // If we get here, child returned without yielding (i.e. like a normal function).
   child_status = COMPLETE;
-  longjmp(child_jmp_buf, CHILD_TO_PARENT);
+  longjmp(child_jmp_buf, CHILD_TO_PARENT);  /// @BUG pretty sure this should be parent_jmp_buf
   // No break required: longjump does not return
 }
 
@@ -106,19 +108,8 @@ void Coroutine::operator()()
   int val;
   switch( val = setjmp(parent_jmp_buf) ) {                    
     case IMMEDIATE: {
-      switch( child_status ) {
-        case READY: {
-          longjmp(child_jmp_buf, PARENT_TO_CHILD_STARTING);
-          // No break required: longjump does not return
-        }
-        case RUNNING: {
-          longjmp(child_jmp_buf, PARENT_TO_CHILD);
-          // No break required: longjump does not return
-        }
-        case COMPLETE: {
-          return; 
-        }
-      }   
+      if( child_status != COMPLETE )
+        jump_to_child();
     }
        
     case CHILD_TO_PARENT: {
@@ -133,16 +124,30 @@ void Coroutine::operator()()
 }        
         
         
+void Coroutine::jump_to_child()
+{
+  switch( child_status ) {
+    case READY: {
+      longjmp(child_jmp_buf, PARENT_TO_CHILD_STARTING);
+      // No break required: longjump does not return
+    }
+    case RUNNING: {
+      longjmp(child_jmp_buf, PARENT_TO_CHILD);
+      // No break required: longjump does not return
+    }
+  }   
+}
+
+
 void Coroutine::yield_nonstatic()
 {
   ASSERT( magic == MAGIC, "bad this pointer or object corrupted: %p", this );
   ASSERT( child_status == RUNNING, "yield when child was not running, status %d", (int)child_status );
+  
   int val;
   switch( val = setjmp( child_jmp_buf ) ) {                    
     case IMMEDIATE: {
-      // Run the main routine
-      longjmp( parent_jmp_buf, CHILD_TO_PARENT );
-      // No break required: longjump does not return
+      jump_to_parent();
     }
     case PARENT_TO_CHILD: {
       // If the child has ever yielded, its context will come back to here
@@ -153,6 +158,25 @@ void Coroutine::yield_nonstatic()
       FAIL("unexpected longjmp value: %d", val);
     }
   }    
+}
+
+
+void Coroutine::jump_to_parent()
+{
+  // Make a copy of the parent jmp buf
+  jmp_buf stackable_parent_jmp_buf;
+  copy_jmp_buf( stackable_parent_jmp_buf, parent_jmp_buf );
+
+  // From here on, I believe the we can be re-entered via run_iteration().
+  // The correct run_iteration calls will return in the correct order because
+  // we are stacking the parent jmp bufs. 
+  // From child's POV, each more-nested reentry will just be a successive 
+  // iteration (because child jump buf and status are just the member ones
+  // Note: we're reentrant into run_iteration() but not recursive, since
+  // this is the child's context.
+  
+  longjmp( stackable_parent_jmp_buf, CHILD_TO_PARENT );
+  // No break required: longjump does not return
 }
 
 
