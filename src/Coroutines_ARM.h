@@ -7,6 +7,7 @@
 #define Coroutines_ARM_h
 
 #include <csetjmp> 
+#include <cstring>
 
 // This file contains low-level stuff for ARM only
 static_assert( __arm__==1 || __thumb__==1 );
@@ -44,6 +45,11 @@ inline void *get_jmp_buf_cls( const jmp_buf &env )
 inline void set_jmp_buf_cls( jmp_buf &env, void *new_cls )
 {
   env[ARM_JMPBUF_INDEX_CLS] = reinterpret_cast<int>(new_cls);
+}
+
+inline void copy_jmp_buf( jmp_buf &dest, const jmp_buf &src )
+{
+    memcpy( dest, src, sizeof(jmp_buf) );
 }
 
 inline void *get_cls()

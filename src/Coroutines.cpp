@@ -78,7 +78,7 @@ byte *Coroutine::prepare_child_stack( byte *frame_pointer, byte *stack_pointer )
 void Coroutine::prepare_child_jmp_buf( const jmp_buf &initial_jmp_buf, byte *child_stack_pointer )
 {
   // Prepare a jump buffer for the child and point it to the new stack
-  memcpy( child_jmp_buf, initial_jmp_buf, sizeof(jmp_buf) );
+  copy_jmp_buf( child_jmp_buf, initial_jmp_buf );
   set_jmp_buf_sp(child_jmp_buf, child_stack_pointer);
   set_jmp_buf_cls(child_jmp_buf, this);
 }
