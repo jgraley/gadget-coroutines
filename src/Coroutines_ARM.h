@@ -21,12 +21,12 @@ static_assert( sizeof(jmp_buf) == sizeof(int[23]) );
 static const int ARM_JMPBUF_INDEX_SP = 8;
 static const int ARM_JMPBUF_INDEX_CLS = 5;
 
-inline void *get_jmp_buf_sp( jmp_buf env )
+inline void *get_jmp_buf_sp( const jmp_buf &env )
 {
   return reinterpret_cast<void *>( env[ARM_JMPBUF_INDEX_SP] );
 }
 
-inline void set_jmp_buf_sp( jmp_buf env, void *new_sp )
+inline void set_jmp_buf_sp( jmp_buf &env, void *new_sp )
 {
   env[ARM_JMPBUF_INDEX_SP] = reinterpret_cast<int>(new_sp);
 }
@@ -36,12 +36,12 @@ inline void *get_frame_address()
   return reinterpret_cast<void *>( __builtin_frame_address(0) );
 }
 
-inline void *get_jmp_buf_cls( jmp_buf env )
+inline void *get_jmp_buf_cls( const jmp_buf &env )
 {
   return reinterpret_cast<void *>( env[ARM_JMPBUF_INDEX_CLS] );
 }
 
-inline void set_jmp_buf_cls( jmp_buf env, void *new_cls )
+inline void set_jmp_buf_cls( jmp_buf &env, void *new_cls )
 {
   env[ARM_JMPBUF_INDEX_CLS] = reinterpret_cast<int>(new_cls);
 }

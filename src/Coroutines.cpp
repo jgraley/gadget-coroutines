@@ -54,6 +54,14 @@ Coroutine::Coroutine( function<void()> child_main_function_ ) :
 }
 
 
+Coroutine::~Coroutine()
+{
+  ASSERT( magic == MAGIC, "bad this pointer or object corrupted: %p", this );
+  ASSERT( child_status == COMPLETE, "destruct when child was not complete, status %d", (int)child_status );
+  delete[] child_stack_memory;
+}
+
+
 byte *Coroutine::prepare_child_stack( byte *frame_pointer, byte *stack_pointer )
 {
   // Decide how much stack to keep (basically the current frame, i.e. the 
@@ -67,7 +75,7 @@ byte *Coroutine::prepare_child_stack( byte *frame_pointer, byte *stack_pointer )
 }
 
 
-void Coroutine::prepare_child_jmp_buf( jmp_buf initial_jmp_buf, byte *child_stack_pointer )
+void Coroutine::prepare_child_jmp_buf( const jmp_buf &initial_jmp_buf, byte *child_stack_pointer )
 {
   // Prepare a jump buffer for the child and point it to the new stack
   memcpy( child_jmp_buf, initial_jmp_buf, sizeof(jmp_buf) );
@@ -76,14 +84,6 @@ void Coroutine::prepare_child_jmp_buf( jmp_buf initial_jmp_buf, byte *child_stac
 }
 
 
-Coroutine::~Coroutine()
-{
-  ASSERT( magic == MAGIC, "bad this pointer or object corrupted: %p", this );
-  ASSERT( child_status == COMPLETE, "destruct when child was not complete, status %d", (int)child_status );
-  delete[] child_stack_memory;
-}
-
-        
 [[ noreturn ]] void Coroutine::start_child()
 {
   ASSERT( magic == MAGIC, "bad this pointer or object corrupted: %p", this ); 
