@@ -28,6 +28,7 @@ Coroutine::Coroutine( function<void()> child_function_ ) :
   child_stack_memory( new byte[stack_size] ),
   child_status(READY)
 {    
+  ASSERT(child_function, "NULL child function was supplied");
   jmp_buf initial_jmp_buf;
   int val;
   CONSTRUCTOR_TRACE("this=%p sp=%p", this, get_sp());
@@ -50,10 +51,7 @@ Coroutine::Coroutine( function<void()> child_function_ ) :
       break;
     }
     case PARENT_TO_CHILD_STARTING: {
-      // Warning: no this pointer
-      Coroutine * const that = get_current();
-      CONSTRUCTOR_TRACE("this=%p that=%p sp=%p", this, that, get_sp());
-      ASSERT( that, "still in baseline %p", this );
+      CONSTRUCTOR_TRACE("this=%p that=%p sp=%p", this, get_current(), get_sp());
       child_main_function();            
     }
     default: {
@@ -115,7 +113,7 @@ void Coroutine::prepare_child_jmp_buf( jmp_buf &child_jmp_buf, const jmp_buf &in
   child_status = COMPLETE;
   
   // Let the parent run
-  jump_to_parent();
+  jump_to_parent( std::function<void()>() );
 }
 
 
@@ -172,7 +170,7 @@ void Coroutine::jump_to_child()
 }
 
 
-void Coroutine::yield_nonstatic()
+void Coroutine::yield_nonstatic( function<void()> interrupt_enables )
 {
   ASSERT( magic == MAGIC, "bad this pointer or object corrupted: %p", this );
   ASSERT( child_status == RUNNING, "yield when child was not running, status %d", (int)child_status );
@@ -180,7 +178,7 @@ void Coroutine::yield_nonstatic()
   int val;
   switch( val = setjmp( child_jmp_buf ) ) {                    
     case IMMEDIATE: {
-      jump_to_parent();
+      jump_to_parent( interrupt_enables );
     }
     case PARENT_TO_CHILD: {
       // If the child has ever yielded, its context will come back to here
@@ -193,7 +191,7 @@ void Coroutine::yield_nonstatic()
 }
 
 
-void Coroutine::jump_to_parent()
+void Coroutine::jump_to_parent( function<void()> interrupt_enables )
 {
   // From here on, I believe the we can be re-entered via run_iteration().
   // The correct run_iteration calls will return in the correct order because
@@ -202,6 +200,11 @@ void Coroutine::jump_to_parent()
   // iteration (because child jump buf and status are just the member ones
   // Note: we're reentrant into run_iteration() but not recursive, since
   // this is the child's context.
+  
+  if( interrupt_enables )
+      interrupt_enables(); // enable some interrupts - might get re-entered
+  // Note: since we are still in the child's context, get_current() will 
+  // return "this" as required, so the lambda can use it.
   
   longjmp( next_parent_jmp_buf, CHILD_TO_PARENT );
 }

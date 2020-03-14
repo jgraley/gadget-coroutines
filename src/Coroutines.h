@@ -29,7 +29,7 @@ public:
     
   void operator()();
   inline static Coroutine *get_current();
-  inline static void yield();
+  inline static void yield( std::function<void()> interrupt_enables = std::function<void()>() );
 
 private:
   enum ChildStatus
@@ -51,8 +51,8 @@ private:
   void prepare_child_jmp_buf( jmp_buf &child_jmp_buf, const jmp_buf &initial_jmp_buf, byte *parent_stack_pointer, byte *child_stack_pointer );
   [[ noreturn ]] void child_main_function();
   void jump_to_child();
-  void yield_nonstatic();
-  [[ noreturn ]] void jump_to_parent();
+  void yield_nonstatic( std::function<void()> interrupt_enables );
+  [[ noreturn ]] void jump_to_parent( std::function<void()> interrupt_enables );
   
   const uint32_t magic;
   const std::function<void()> child_function; 
@@ -75,11 +75,11 @@ Coroutine *Coroutine::get_current()
 }
 
 
-void Coroutine::yield()
+void Coroutine::yield( std::function<void()> interrupt_enables )
 {
   Coroutine * const that = get_current();
   if( that )
-    that->yield_nonstatic();
+    that->yield_nonstatic( interrupt_enables );
 }
 
 #endif
