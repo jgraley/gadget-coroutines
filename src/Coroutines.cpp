@@ -115,8 +115,8 @@ void Coroutine::operator()()
   
   // Restore parent jmp buf pointer. This is a "re-enterer saves" model
   // - the preentpting operator() makes sure it leaves that pointer as 
-  // it was before pre-enpting. Thus the preempted invocation resumes
-  // as if nothing happens (though the child state machine may have 
+  // it was before it started. Thus the re-entered invocation resumes
+  // as if nothing happend (though the child state machine may have 
   // advanced).
   next_parent_jmp_buf = saved_next_parent_jmp_buf;
 }
@@ -133,7 +133,7 @@ void Coroutine::run_iteration()
     }
        
     case CHILD_TO_PARENT: {
-      // Warning: no this pointer
+      // Warning: no this pointer #18
       return; 
     }
                     
@@ -177,7 +177,7 @@ void Coroutine::yield_nonstatic()
     }
     case PARENT_TO_CHILD: {
       // If the child has ever yielded, its context will come back to here
-      // Warning: no this pointer
+      // Warning: no this pointer #18
       return; 
     }    
     default: {
