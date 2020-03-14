@@ -19,7 +19,8 @@
 using namespace std;
 
 // Only enable when constructing after system initialisation, eg in setup()
-#define CONSTRUCTOR_TRACE (void)
+#define CONSTRUCTOR_TRACE TRACE
+//(void)
 
 Coroutine::Coroutine( function<void()> child_function_ ) :
   magic( MAGIC ),
@@ -30,7 +31,7 @@ Coroutine::Coroutine( function<void()> child_function_ ) :
 {    
   jmp_buf initial_jmp_buf;
   int val;
-  CONSTRUCTOR_TRACE("this=%p sp=%p, last arg ends=%p", this, get_sp(), &child_function_ + 1);
+  CONSTRUCTOR_TRACE("this=%p sp=%p, last arg begins %p ends %p", this, get_sp(), &child_function_, &child_function_ + 1);
   switch( val = setjmp(initial_jmp_buf) ) { 
     case IMMEDIATE: {
       // Get current stack pointer and frame address 
