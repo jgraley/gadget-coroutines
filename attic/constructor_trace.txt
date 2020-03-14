@@ -1,18 +1,9 @@
 Constructing...
-
-Coroutines.cpp:33 this=0x20000be0 sp=0x20007f30, last arg ends=0x20007fd8
-
-Coroutines.cpp:41 this=0x20000be0 sp=0x20007f30, stack_pointer=0x20007f30, frame_pointer=0x20007f40
-
-Coroutines.cpp:82 moving 16 from 0x20007f30 to 0x20001058
-
-Coroutines.cpp:93 initial jmp_buf has cls=00000000 sl=20000414 fp=20000124 sp=20007f30 lr=000043a5
-
+Coroutines.cpp:34 this=0x20000be0 sp=0x20007f30, last arg begins 0x20007fc8 ends 0x20007fd8
+Coroutines.cpp:42 this=0x20000be0 sp=0x20007f30, stack_pointer=0x20007f30, frame_pointer=0x20007f40
+Coroutines.cpp:83 moving 16 from 0x20007f30 to 0x20001058
+Coroutines.cpp:92 initial jmp_buf has cls=00000000 sl=20000414 fp=20000124 sp=20007f30 lr=000043ab
 Construct complete
-
 First iteration...
-
-Coroutines.cpp:53 this=0x20000be0 that=0x20000be0 sp=0x20001058
-
+Coroutines.cpp:54 this=0x20000be0 that=0x20000be0 sp=0x20001058
 First iteration complete
-
