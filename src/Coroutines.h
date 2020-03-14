@@ -56,7 +56,7 @@ private:
   [[ noreturn ]] void jump_to_parent();
   
   const uint32_t magic;
-  std::function<void()> child_function; // @TODO try const
+  const std::function<void()> child_function; 
   const int stack_size;
   byte * const child_stack_memory;
   ChildStatus child_status;
