@@ -6,7 +6,9 @@
 
 #include "Coroutines.h"
 
+#include "Coroutines_ARM.h"
 #include "CoroTracing.h"
+#include "CoroIntegration.h"
 
 #include <cstring>
 #include <functional>
@@ -28,6 +30,7 @@ Coroutine::Coroutine( function<void()> child_function_ ) :
 {    
   jmp_buf initial_jmp_buf;
   int val;
+  //TRACE("this=%p sp=%p", this, get_sp());
   switch( val = setjmp(initial_jmp_buf) ) { 
     case IMMEDIATE: {
       // Get current stack pointer and frame address 
@@ -45,12 +48,13 @@ Coroutine::Coroutine( function<void()> child_function_ ) :
     case PARENT_TO_CHILD_STARTING: {
       // Warning: no this pointer
       Coroutine * const that = get_current();
-      ASSERT( that, "still in baseline" );
+      //TRACE("this=%p that=%p sp=%p", this, that, get_sp());
+      ASSERT( that, "still in baseline %p", this );
       that->child_main_function();            
     }
     default: {
       // This setjmp call was only to get the stack pointer. 
-      FAIL("unexpected longjmp value: %d", val);
+      ERROR("unexpected longjmp value: %d", val);
     }
   }
 }
@@ -61,6 +65,7 @@ Coroutine::~Coroutine()
   ASSERT( magic == MAGIC, "bad this pointer or object corrupted: %p", this );
   ASSERT( child_status == COMPLETE, "destruct when child was not complete, status %d", (int)child_status );
   delete[] child_stack_memory;
+  bring_in_CoroIntegration();
 }
 
 
@@ -72,6 +77,7 @@ byte *Coroutine::prepare_child_stack( byte *frame_pointer, byte *stack_pointer )
   // Note: stacks usually begin at the highest address and work down
   int bytes_to_retain = frame_pointer - stack_pointer;
   byte *child_stack_pointer = child_stack_memory + stack_size - bytes_to_retain;      
+  //TRACE("moving %d from %p to %p", bytes_to_retain, stack_pointer, child_stack_pointer );
   memmove( child_stack_pointer, stack_pointer, bytes_to_retain );
   return child_stack_pointer;
 }
@@ -138,7 +144,7 @@ void Coroutine::run_iteration()
     }
                     
     default: {
-      FAIL("unexpected longjmp value: %d", val);
+      ERROR("unexpected longjmp value: %d", val);
     }
   }
 }        
@@ -181,7 +187,7 @@ void Coroutine::yield_nonstatic()
       return; 
     }    
     default: {
-      FAIL("unexpected longjmp value: %d", val);
+      ERROR("unexpected longjmp value: %d", val);
     }
   }    
 }
@@ -208,4 +214,3 @@ constexpr uint32_t make_magic_le(const char *str)
 
 
 const uint32_t Coroutine::MAGIC = make_magic_le("GCo1");
-

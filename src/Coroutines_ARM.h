@@ -64,6 +64,13 @@ inline void set_cls( void *cls )
     asm( "mov r9, %[value]" : : [value] "r" (cls) : );
 }
 
+inline void *get_sp()
+{
+    void *sp;
+    asm( "mov %[result], sp" : [result] "=r" (sp) : : );
+    return sp;
+}
+
 typedef int *jmp_buf_ptr;
 
 #endif

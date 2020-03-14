@@ -6,6 +6,8 @@
 
 #include "CoroTracing.h"
 
+#include "Coroutines_ARM.h"
+
 #include <cstring>
 #include <functional>
 #include <cstdint>
@@ -14,10 +16,16 @@
 using namespace std;
 
 
-function< void(const char *) >  _gcoroutines_logger = [](const char *message)
+void _gcoroutines_log(const char *message)
 {
+  void *cls = get_cls();
+  set_cls(nullptr);
   Serial.println(message); 
-};
+  delay(100);
+  set_cls(cls);
+}
+
+function< void(const char *) >  _gcoroutines_logger = _gcoroutines_log;
 
 
 void gcoroutines_set_logger( function< void(const char *) > logger )
@@ -31,7 +39,8 @@ void _gcoroutines_trace( const char *file, int line, const char *sformat, const 
   va_list args;
   va_start( args, uformat );
   char message[256];
-  snprintf( message, sizeof(message), sformat, file, line );
+  const char *file_separator = strrchr( file, '/' );
+  snprintf( message, sizeof(message), sformat, file_separator ? file_separator+1 : file, line );
   int l = strlen(message);
   vsnprintf( message+l, sizeof(message)-l, uformat, args );
   message[sizeof(message)-1] = '\0';
