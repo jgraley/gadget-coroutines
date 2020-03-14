@@ -39,7 +39,7 @@ Coroutine::Coroutine( function<void()> child_function_ ) :
       byte *child_stack_pointer = prepare_child_stack( frame_pointer, stack_pointer );
       
       // Create the child's jump buf
-      prepare_child_jmp_buf( initial_jmp_buf, child_stack_pointer );
+      prepare_child_jmp_buf( child_jmp_buf, initial_jmp_buf, child_stack_pointer );
       break;
     }
     case PARENT_TO_CHILD_STARTING: {
@@ -77,7 +77,7 @@ byte *Coroutine::prepare_child_stack( byte *frame_pointer, byte *stack_pointer )
 }
 
 
-void Coroutine::prepare_child_jmp_buf( const jmp_buf &initial_jmp_buf, byte *child_stack_pointer )
+void Coroutine::prepare_child_jmp_buf( jmp_buf &child_jmp_buf, const jmp_buf &initial_jmp_buf, byte *child_stack_pointer )
 {
   // Prepare a jump buffer for the child and point it to the new stack
   copy_jmp_buf( child_jmp_buf, initial_jmp_buf );
