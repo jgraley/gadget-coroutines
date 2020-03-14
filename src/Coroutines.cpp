@@ -19,9 +19,9 @@
 using namespace std;
 
 
-Coroutine::Coroutine( function<void()> child_main_function_ ) :
+Coroutine::Coroutine( function<void()> child_function_ ) :
   magic( MAGIC ),
-  child_main_function( child_main_function_ ),
+  child_function( child_function_ ),
   stack_size( default_stack_size ),
   child_stack_memory( new byte[stack_size] ),
   child_status(READY)
@@ -46,7 +46,7 @@ Coroutine::Coroutine( function<void()> child_main_function_ ) :
       // Warning: no this pointer
       Coroutine * const that = get_current();
       ASSERT( that, "still in baseline" );
-      that->start_child();            
+      that->child_main_function();            
     }
     default: {
       // This setjmp call was only to get the stack pointer. 
@@ -86,19 +86,20 @@ void Coroutine::prepare_child_jmp_buf( const jmp_buf &initial_jmp_buf, byte *chi
 }
 
 
-[[ noreturn ]] void Coroutine::start_child()
+[[ noreturn ]] void Coroutine::child_main_function()
 {
   ASSERT( magic == MAGIC, "bad this pointer or object corrupted: %p", this ); 
   child_status = RUNNING;
     
   // Invoke the child. We take the view that this is enough to give
   // it its first "timeslice"
-  child_main_function();
+  child_function();
     
   // If we get here, child returned without yielding (i.e. like a normal function).
   child_status = COMPLETE;
-  longjmp(child_jmp_buf, CHILD_TO_PARENT);  /// @BUG pretty sure this should be parent_jmp_buf
-  // No break required: longjump does not return
+  
+  // Let the parent run
+  jump_to_parent();
 }
 
 
@@ -106,13 +107,29 @@ void Coroutine::operator()()
 {
   ASSERT( magic == MAGIC, "bad this pointer or object corrupted: %p", this );
 
+  // Save the current next parent jump buffer
+  jmp_buf_ptr saved_next_parent_jmp_buf = next_parent_jmp_buf;
+  
+  // Run the coroutine
+  run_iteration();
+  
+  // Restore parent jmp buf pointer. This is a "re-enterer saves" model
+  // - the preentpting operator() makes sure it leaves that pointer as 
+  // it was before pre-enpting. Thus the preempted invocation resumes
+  // as if nothing happens (though the child state machine may have 
+  // advanced).
+  next_parent_jmp_buf = saved_next_parent_jmp_buf;
+}
+  
+  
+void Coroutine::run_iteration()
+{
   jmp_buf parent_jmp_buf;
   int val;
   switch( val = setjmp(parent_jmp_buf) ) {                    
     case IMMEDIATE: {
-      parent_jmp_buf_ptr = parent_jmp_buf;
-      if( child_status != COMPLETE )
-        jump_to_child();
+      next_parent_jmp_buf = parent_jmp_buf;
+      jump_to_child();
     }
        
     case CHILD_TO_PARENT: {
@@ -129,6 +146,9 @@ void Coroutine::operator()()
         
 void Coroutine::jump_to_child()
 {
+  // This is where we cease to be reentrant because we're starting to 
+  // access member variables relating to child state
+  
   switch( child_status ) {
     case READY: {
       longjmp(child_jmp_buf, PARENT_TO_CHILD_STARTING);
@@ -137,6 +157,9 @@ void Coroutine::jump_to_child()
     case RUNNING: {
       longjmp(child_jmp_buf, PARENT_TO_CHILD);
       // No break required: longjump does not return
+    }
+    case COMPLETE: {
+      // All finished, nothing to do except return
     }
   }   
 }
@@ -166,9 +189,6 @@ void Coroutine::yield_nonstatic()
 
 void Coroutine::jump_to_parent()
 {
-  // Make a copy of the parent jmp buf
-  int *stackable_parent_jmp_buf_ptr = parent_jmp_buf_ptr;
-
   // From here on, I believe the we can be re-entered via run_iteration().
   // The correct run_iteration calls will return in the correct order because
   // we are stacking the parent jmp bufs. 
@@ -177,8 +197,7 @@ void Coroutine::jump_to_parent()
   // Note: we're reentrant into run_iteration() but not recursive, since
   // this is the child's context.
   
-  longjmp( stackable_parent_jmp_buf_ptr, CHILD_TO_PARENT );
-  // No break required: longjump does not return
+  longjmp( next_parent_jmp_buf, CHILD_TO_PARENT );
 }
 
 
