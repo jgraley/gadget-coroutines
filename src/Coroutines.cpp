@@ -19,7 +19,7 @@
 using namespace std;
 
 // Only enable when constructing after system initialisation, eg in setup()
-#define CONSTRUCTOR_TRACE TRACE (void)
+#define CONSTRUCTOR_TRACE DISABLED_TRACE
 
 Coroutine::Coroutine( function<void()> child_function_ ) :
   magic( MAGIC ),
@@ -37,16 +37,16 @@ Coroutine::Coroutine( function<void()> child_function_ ) :
     case IMMEDIATE: {
       // Get current stack pointer and frame address 
       // taking care that it will have a different stack frame
-      byte *frame_pointer = (byte *)( get_frame_address() );
+      byte *frame_end = (byte *)(&child_function_ + 1);
       byte *stack_pointer = (byte *)( get_jmp_buf_sp(initial_jmp_buf) );  
       
-      CONSTRUCTOR_TRACE("this=%p sp=%p, stack_pointer=%p, frame_pointer=%p", this, get_sp(), stack_pointer, frame_pointer);
+      CONSTRUCTOR_TRACE("this=%p sp=%p, stack_pointer=%p, frame_end=%p", this, get_sp(), stack_pointer, frame_end);
 
       // Get the child's stack ready                   
-      byte *child_stack_pointer = prepare_child_stack( frame_pointer, stack_pointer );
+      byte *child_stack_pointer = prepare_child_stack( frame_end, stack_pointer );
       
       // Create the child's jump buf
-      prepare_child_jmp_buf( child_jmp_buf, initial_jmp_buf, child_stack_pointer );
+      prepare_child_jmp_buf( child_jmp_buf, initial_jmp_buf, stack_pointer, child_stack_pointer );
       break;
     }
     case PARENT_TO_CHILD_STARTING: {
@@ -54,7 +54,7 @@ Coroutine::Coroutine( function<void()> child_function_ ) :
       Coroutine * const that = get_current();
       CONSTRUCTOR_TRACE("this=%p that=%p sp=%p", this, that, get_sp());
       ASSERT( that, "still in baseline %p", this );
-      that->child_main_function();            
+      child_main_function();            
     }
     default: {
       // This setjmp call was only to get the stack pointer. 
@@ -73,13 +73,13 @@ Coroutine::~Coroutine()
 }
 
 
-byte *Coroutine::prepare_child_stack( byte *frame_pointer, byte *stack_pointer )
+byte *Coroutine::prepare_child_stack( byte *frame_end, byte *stack_pointer )
 {
   // Decide how much stack to keep (basically the current frame, i.e. the 
   // stack frame of this invocation of this function) and copy it into the 
   // new stack, at the bottom.
   // Note: stacks usually begin at the highest address and work down
-  int bytes_to_retain = frame_pointer - stack_pointer;
+  int bytes_to_retain = frame_end - stack_pointer;
   byte *child_stack_pointer = child_stack_memory + stack_size - bytes_to_retain;      
   CONSTRUCTOR_TRACE("moving %d from %p to %p", bytes_to_retain, stack_pointer, child_stack_pointer );
   memmove( child_stack_pointer, stack_pointer, bytes_to_retain );
@@ -87,15 +87,18 @@ byte *Coroutine::prepare_child_stack( byte *frame_pointer, byte *stack_pointer )
 }
 
 
-void Coroutine::prepare_child_jmp_buf( jmp_buf &child_jmp_buf, const jmp_buf &initial_jmp_buf, byte *child_stack_pointer )
+void Coroutine::prepare_child_jmp_buf( jmp_buf &child_jmp_buf, const jmp_buf &initial_jmp_buf, byte *parent_stack_pointer, byte *child_stack_pointer )
 {
   // Prepare a jump buffer for the child and point it to the new stack
   CONSTRUCTOR_TRACE("initial jmp_buf has cls=%08x sl=%08x fp=%08x sp=%08x lr=%08x", 
       initial_jmp_buf[5], initial_jmp_buf[6], initial_jmp_buf[7], 
       initial_jmp_buf[8], initial_jmp_buf[9] );
+  byte *parent_frame_pointer = (byte *)(get_jmp_buf_fp(initial_jmp_buf));
+  byte *child_frame_pointer = parent_frame_pointer + (child_stack_pointer-parent_stack_pointer);;
   copy_jmp_buf( child_jmp_buf, initial_jmp_buf );
-  set_jmp_buf_sp(child_jmp_buf, child_stack_pointer);
-  set_jmp_buf_cls(child_jmp_buf, this);
+  set_jmp_buf_sp( child_jmp_buf, child_stack_pointer);
+  set_jmp_buf_fp( child_jmp_buf, child_frame_pointer);
+  set_jmp_buf_cls( child_jmp_buf, this);
 }
 
 
@@ -122,21 +125,6 @@ void Coroutine::operator()()
 
   // Save the current next parent jump buffer
   jmp_buf_ptr saved_next_parent_jmp_buf = next_parent_jmp_buf;
-  
-  // Run the coroutine
-  run_iteration();
-  
-  // Restore parent jmp buf pointer. This is a "re-enterer saves" model
-  // - the preentpting operator() makes sure it leaves that pointer as 
-  // it was before it started. Thus the re-entered invocation resumes
-  // as if nothing happend (though the child state machine may have 
-  // advanced).
-  next_parent_jmp_buf = saved_next_parent_jmp_buf;
-}
-  
-  
-void Coroutine::run_iteration()
-{
   jmp_buf parent_jmp_buf;
   int val;
   switch( val = setjmp(parent_jmp_buf) ) {                    
@@ -146,15 +134,21 @@ void Coroutine::run_iteration()
     }
        
     case CHILD_TO_PARENT: {
-      // Warning: no this pointer #18
-      return; 
+      break;
     }
                     
     default: {
       ERROR("unexpected longjmp value: %d", val);
     }
   }
-}        
+  
+  // Restore parent jmp buf pointer. This is a "re-enterer saves" model
+  // - the re-entering operator() makes sure it leaves that pointer as 
+  // it was before it started. Thus the re-entered invocation resumes
+  // as if nothing happend (though the child state machine may have 
+  // advanced).
+  next_parent_jmp_buf = saved_next_parent_jmp_buf;
+}
         
         
 void Coroutine::jump_to_child()
@@ -190,8 +184,7 @@ void Coroutine::yield_nonstatic()
     }
     case PARENT_TO_CHILD: {
       // If the child has ever yielded, its context will come back to here
-      // Warning: no this pointer #18
-      return; 
+      break; 
     }    
     default: {
       ERROR("unexpected longjmp value: %d", val);

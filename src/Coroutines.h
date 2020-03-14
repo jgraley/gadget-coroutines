@@ -47,10 +47,9 @@ private:
     PARENT_TO_CHILD_STARTING = 3
   };
 
-  byte *prepare_child_stack( byte *frame_pointer, byte *stack_pointer );
-  void prepare_child_jmp_buf( jmp_buf &child_jmp_buf, const jmp_buf &initial_jmp_buf, byte *child_stack_pointer );
+  byte *prepare_child_stack( byte *frame_end, byte *stack_pointer );
+  void prepare_child_jmp_buf( jmp_buf &child_jmp_buf, const jmp_buf &initial_jmp_buf, byte *parent_stack_pointer, byte *child_stack_pointer );
   [[ noreturn ]] void child_main_function();
-  void run_iteration();
   void jump_to_child();
   void yield_nonstatic();
   [[ noreturn ]] void jump_to_parent();

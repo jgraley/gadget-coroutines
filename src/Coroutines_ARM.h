@@ -19,8 +19,19 @@ static_assert( sizeof(int) == sizeof(void *) );
 // Make sure the setjmp.h is the one we expect
 static_assert( sizeof(jmp_buf) == sizeof(int[23]) );
 
-static const int ARM_JMPBUF_INDEX_SP = 8;
-static const int ARM_JMPBUF_INDEX_CLS = 5;
+// Jmp buf only holds "callee-save" registers
+static const int ARM_FIRST_CALLEE_SAVE = 4;
+
+// See http://infocenter.arm.com/help/topic/com.arm.doc.espc0002/ATPCS.pdf
+static const int ARM_JMPBUF_INDEX_SP = 12 - ARM_FIRST_CALLEE_SAVE; // r12
+static const int ARM_JMPBUF_INDEX_CLS = 9 - ARM_FIRST_CALLEE_SAVE; // r9
+#if defined(__thumb__)
+// ATPCS says any of r4-r7 which would be problematic for us. But gcc
+// uses r7 by default, so this will work until you configure it otherwise.
+static const int ARM_JMPBUF_INDEX_FP = 7 - ARM_FIRST_CALLEE_SAVE; // r7
+#elif defined(__arm__)
+static const int ARM_JMPBUF_INDEX_FP = 11 - ARM_FIRST_CALLEE_SAVE; // r11
+#endif 
 
 inline void *get_jmp_buf_sp( const jmp_buf &env )
 {
@@ -30,11 +41,6 @@ inline void *get_jmp_buf_sp( const jmp_buf &env )
 inline void set_jmp_buf_sp( jmp_buf &env, void *new_sp )
 {
   env[ARM_JMPBUF_INDEX_SP] = reinterpret_cast<int>(new_sp);
-}
-
-inline void *get_frame_address()
-{
-  return reinterpret_cast<void *>( __builtin_frame_address(0) );
 }
 
 inline void *get_jmp_buf_cls( const jmp_buf &env )
@@ -47,10 +53,21 @@ inline void set_jmp_buf_cls( jmp_buf &env, void *new_cls )
   env[ARM_JMPBUF_INDEX_CLS] = reinterpret_cast<int>(new_cls);
 }
 
+inline void *get_jmp_buf_fp( const jmp_buf &env )
+{
+  return reinterpret_cast<void *>( env[ARM_JMPBUF_INDEX_FP] );
+}
+
+inline void set_jmp_buf_fp( jmp_buf &env, void *new_fp )
+{
+  env[ARM_JMPBUF_INDEX_FP] = reinterpret_cast<int>(new_fp);
+}
+
 inline void copy_jmp_buf( jmp_buf &dest, const jmp_buf &src )
 {
     memcpy( dest, src, sizeof(jmp_buf) );
 }
+
 
 inline void *get_cls()
 {
