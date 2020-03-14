@@ -16,10 +16,10 @@
 #include <cstdint>
 #include "Arduino.h"
 
-#define TEST_REENTRANCY
-
 using namespace std;
 
+// Only enable when constructing after system initialisation, eg in setup()
+#define CONSTRUCTOR_TRACE (void)
 
 Coroutine::Coroutine( function<void()> child_function_ ) :
   magic( MAGIC ),
@@ -30,7 +30,7 @@ Coroutine::Coroutine( function<void()> child_function_ ) :
 {    
   jmp_buf initial_jmp_buf;
   int val;
-  //TRACE("this=%p sp=%p", this, get_sp());
+  CONSTRUCTOR_TRACE("this=%p sp=%p, last arg ends=%p", this, get_sp(), &child_function_ + 1);
   switch( val = setjmp(initial_jmp_buf) ) { 
     case IMMEDIATE: {
       // Get current stack pointer and frame address 
@@ -38,6 +38,8 @@ Coroutine::Coroutine( function<void()> child_function_ ) :
       byte *frame_pointer = (byte *)( get_frame_address() );
       byte *stack_pointer = (byte *)( get_jmp_buf_sp(initial_jmp_buf) );  
       
+      CONSTRUCTOR_TRACE("this=%p sp=%p, stack_pointer=%p, frame_pointer=%p", this, get_sp(), stack_pointer, frame_pointer);
+
       // Get the child's stack ready                   
       byte *child_stack_pointer = prepare_child_stack( frame_pointer, stack_pointer );
       
@@ -48,7 +50,7 @@ Coroutine::Coroutine( function<void()> child_function_ ) :
     case PARENT_TO_CHILD_STARTING: {
       // Warning: no this pointer
       Coroutine * const that = get_current();
-      //TRACE("this=%p that=%p sp=%p", this, that, get_sp());
+      CONSTRUCTOR_TRACE("this=%p that=%p sp=%p", this, that, get_sp());
       ASSERT( that, "still in baseline %p", this );
       that->child_main_function();            
     }
@@ -77,7 +79,7 @@ byte *Coroutine::prepare_child_stack( byte *frame_pointer, byte *stack_pointer )
   // Note: stacks usually begin at the highest address and work down
   int bytes_to_retain = frame_pointer - stack_pointer;
   byte *child_stack_pointer = child_stack_memory + stack_size - bytes_to_retain;      
-  //TRACE("moving %d from %p to %p", bytes_to_retain, stack_pointer, child_stack_pointer );
+  CONSTRUCTOR_TRACE("moving %d from %p to %p", bytes_to_retain, stack_pointer, child_stack_pointer );
   memmove( child_stack_pointer, stack_pointer, bytes_to_retain );
   return child_stack_pointer;
 }
@@ -86,6 +88,9 @@ byte *Coroutine::prepare_child_stack( byte *frame_pointer, byte *stack_pointer )
 void Coroutine::prepare_child_jmp_buf( jmp_buf &child_jmp_buf, const jmp_buf &initial_jmp_buf, byte *child_stack_pointer )
 {
   // Prepare a jump buffer for the child and point it to the new stack
+  CONSTRUCTOR_TRACE("initial jmp_buf has cls=%08x sl=%08x fp=%08x sp=%08x lr=%08x", 
+      initial_jmp_buf[5], initial_jmp_buf[6], initial_jmp_buf[7], 
+      initial_jmp_buf[8], initial_jmp_buf[9] );
   copy_jmp_buf( child_jmp_buf, initial_jmp_buf );
   set_jmp_buf_sp(child_jmp_buf, child_stack_pointer);
   set_jmp_buf_cls(child_jmp_buf, this);
