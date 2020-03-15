@@ -17,25 +17,32 @@ Coroutine led_flasher([]()
   TcCount16* TC = (TcCount16*) TC3;
   while(1)
   {
-    digitalWrite(LED_PIN, true);
-
-    // "Hop" on to the interrupt
-    Coroutine::yield([](){ enable_fg=false; NVIC_EnableIRQ(TC3_IRQn); }); 
-    TC->INTFLAG.bit.MC0 = 1;
-
-    digitalWrite(LED_PIN, false);
-
-    Coroutine::yield(); 
-    TC->INTFLAG.bit.MC0 = 1;
-    
-    digitalWrite(LED_PIN, true);
-
-    // "Hop" back to foreground
-    Coroutine::yield([](){ enable_fg=true; NVIC_DisableIRQ(TC3_IRQn); }); 
-
-    digitalWrite(LED_PIN, false);
-
-    Coroutine::yield(); 
+    if( random(2) )
+    {
+      // Emit a flash "on" the interrupt
+      digitalWrite(LED_PIN, true);
+  
+      // "Hop" on to the interrupt
+      Coroutine::yield([](){ enable_fg=false; NVIC_EnableIRQ(TC3_IRQn); }); 
+      TC->INTFLAG.bit.MC0 = 1;
+  
+      digitalWrite(LED_PIN, false);
+  
+      Coroutine::yield(); 
+      TC->INTFLAG.bit.MC0 = 1;
+    }
+    else
+    {
+      // Emit a flash "on" the loop() function
+      digitalWrite(LED_PIN, true);
+  
+      // "Hop" back to foreground
+      Coroutine::yield([](){ enable_fg=true; NVIC_DisableIRQ(TC3_IRQn); }); 
+  
+      digitalWrite(LED_PIN, false);
+  
+      Coroutine::yield(); 
+    }
   }
 });
 
