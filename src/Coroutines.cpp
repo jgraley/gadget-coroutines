@@ -120,15 +120,16 @@ void Coroutine::prepare_child_jmp_buf( jmp_buf &child_jmp_buf, const jmp_buf &in
 void Coroutine::operator()()
 {
   ASSERT( magic == MAGIC, "bad this pointer or object corrupted: %p", this );
+  
+  // This should prevent re-entry @TODO atomic?
+  if( child_disabler )
+      child_disabler();    
 
   // Save the current next parent jump buffer
-  jmp_buf_ptr saved_next_parent_jmp_buf = next_parent_jmp_buf;
-  jmp_buf parent_jmp_buf;
   int val;
   switch( val = setjmp(parent_jmp_buf) ) {                    
     case IMMEDIATE: {
-      next_parent_jmp_buf = parent_jmp_buf;
-      jump_to_child( child_disabler );
+      jump_to_child();
     }
        
     case CHILD_TO_PARENT: {
@@ -140,25 +141,16 @@ void Coroutine::operator()()
     }
   }
   
+  // This will cause re-entry if a higher priority interrupt is enabled
+  // than whatever is runnig us now. It's OK as long as we leave it at 
+  // bottom of the function. @TODO atomic?
   if( child_enabler )
     child_enabler();
-  
-  // Restore parent jmp buf pointer. This is a "re-enterer saves" model
-  // - the re-entering operator() makes sure it leaves that pointer as 
-  // it was before it started. Thus the re-entered invocation resumes
-  // as if nothing happend (though the child state machine may have 
-  // advanced).
-  next_parent_jmp_buf = saved_next_parent_jmp_buf;
 }
         
         
-void Coroutine::jump_to_child( function<void()> disabler )
+void Coroutine::jump_to_child()
 {
-  // This is where we cease to be reentrant because we're starting to 
-  // access member variables relating to child state
-  if( disabler )
-      disabler();
-  
   switch( child_status ) {
     case READY: {
       longjmp(child_jmp_buf, PARENT_TO_CHILD_STARTING);
@@ -201,15 +193,7 @@ void Coroutine::yield_nonstatic( function<void()> enabler, function<void()> disa
 
 void Coroutine::jump_to_parent()
 {
-  // From here on, I believe the we can be re-entered via run_iteration().
-  // The correct run_iteration calls will return in the correct order because
-  // we are stacking the parent jmp bufs. 
-  // From child's POV, each more-nested reentry will just be a successive 
-  // iteration (because child jump buf and status are just the member ones
-  // Note: we're reentrant into run_iteration() but not recursive, since
-  // this is the child's context.
-    
-  longjmp( next_parent_jmp_buf, CHILD_TO_PARENT );
+  longjmp( parent_jmp_buf, CHILD_TO_PARENT );
 }
 
 

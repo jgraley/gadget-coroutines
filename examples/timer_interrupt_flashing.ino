@@ -10,30 +10,27 @@
 void startTimer(int frequencyHz);
 void setTimerFrequency(int frequencyHz);
 void TC3_Handler();
-volatile bool enable_fg = true;
+
+void wait_next_TC3_MC0()
+{
+    TcCount16* TC = (TcCount16*) TC3;
+
+    // TODO should these be atomic?
+    TC->INTFLAG.bit.MC0 = 1;
+    Coroutine::yield(); 
+}
 
 Coroutine led_flasher([]()
 {
-  TcCount16* TC = (TcCount16*) TC3;
   while(1)
   {
-    digitalWrite(LED_PIN, true);
-
-    Coroutine::yield([](){ enable_fg=false; NVIC_EnableIRQ(TC3_IRQn); }); 
-    TC->INTFLAG.bit.MC0 = 1;
-
     digitalWrite(LED_PIN, false);
 
-    Coroutine::yield(); 
-    TC->INTFLAG.bit.MC0 = 1;
-    
+    wait_next_TC3_MC0();
+
     digitalWrite(LED_PIN, true);
 
-    Coroutine::yield([](){ enable_fg=true; NVIC_DisableIRQ(TC3_IRQn); }); 
-
-    digitalWrite(LED_PIN, false);
-
-    Coroutine::yield(); 
+    wait_next_TC3_MC0();    
   }
 });
 
@@ -42,6 +39,8 @@ void setup() {
   pinMode(LED_PIN, OUTPUT);
   startTimer(10);
 }
+
+void loop() {}
 
 void setTimerFrequency(int frequencyHz) {
   int compareValue = (CPU_HZ / (TIMER_PRESCALER_DIV * frequencyHz)) - 1;
@@ -82,6 +81,8 @@ void startTimer(int frequencyHz) {
   TC->INTENSET.reg = 0;
   TC->INTENSET.bit.MC0 = 1;
 
+  NVIC_EnableIRQ(TC3_IRQn);
+
   TC->CTRLA.reg |= TC_CTRLA_ENABLE;
   while (TC->STATUS.bit.SYNCBUSY == 1); // wait for sync
 }
@@ -90,16 +91,3 @@ void TC3_Handler() {
   led_flasher();
 }
 
-void loop()
-{
-  if( enable_fg )
-  {
-    led_flasher();
-    //if( !enable_fg )
-    //  NVIC_EnableIRQ(TC3_IRQn);
-  }
-  int n = random(300000, 1000000);
-  for(volatile int i=0; i<n; i++ )
-  {
-  }
-}
