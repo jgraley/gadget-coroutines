@@ -54,7 +54,7 @@ private:
   [[ noreturn ]] void child_main_function();
   void jump_to_child( std::function<void()> disabler );
   void yield_nonstatic( std::function<void()> enabler, std::function<void()> disabler );
-  [[ noreturn ]] void jump_to_parent( std::function<void()> enabler );
+  [[ noreturn ]] void jump_to_parent();
   
   const uint32_t magic;
   const std::function<void()> child_function; 
@@ -63,6 +63,7 @@ private:
   ChildStatus child_status;
   jmp_buf_ptr next_parent_jmp_buf;
   jmp_buf child_jmp_buf;
+  std::function<void()> child_enabler;
   std::function<void()> child_disabler;
     
   static const int default_stack_size = 1024;

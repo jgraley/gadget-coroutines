@@ -113,7 +113,7 @@ void Coroutine::prepare_child_jmp_buf( jmp_buf &child_jmp_buf, const jmp_buf &in
   child_status = COMPLETE;
   
   // Let the parent run
-  jump_to_parent( std::function<void()>() );
+  jump_to_parent();
 }
 
 
@@ -139,6 +139,9 @@ void Coroutine::operator()()
       ERROR("unexpected longjmp value: %d", val);
     }
   }
+  
+  if( child_enabler )
+    child_enabler();
   
   // Restore parent jmp buf pointer. This is a "re-enterer saves" model
   // - the re-entering operator() makes sure it leaves that pointer as 
@@ -177,12 +180,13 @@ void Coroutine::yield_nonstatic( function<void()> enabler, function<void()> disa
   ASSERT( magic == MAGIC, "bad this pointer or object corrupted: %p", this );
   ASSERT( child_status == RUNNING, "yield when child was not running, status %d", (int)child_status );
   
+  child_enabler = enabler;
   child_disabler = disabler;
 
   int val;
   switch( val = setjmp( child_jmp_buf ) ) {                    
     case IMMEDIATE: {
-      jump_to_parent( enabler );
+      jump_to_parent();
     }
     case PARENT_TO_CHILD: {
       // If the child has ever yielded, its context will come back to here
@@ -195,7 +199,7 @@ void Coroutine::yield_nonstatic( function<void()> enabler, function<void()> disa
 }
 
 
-void Coroutine::jump_to_parent( function<void()> enabler )
+void Coroutine::jump_to_parent()
 {
   // From here on, I believe the we can be re-entered via run_iteration().
   // The correct run_iteration calls will return in the correct order because
@@ -204,12 +208,7 @@ void Coroutine::jump_to_parent( function<void()> enabler )
   // iteration (because child jump buf and status are just the member ones
   // Note: we're reentrant into run_iteration() but not recursive, since
   // this is the child's context.
-  
-  if( enabler )
-      enabler(); // enable some interrupts - might get re-entered
-  // Note: since we are still in the child's context, get_current() will 
-  // return "this" as required, so the lambda can use it.
-  
+    
   longjmp( next_parent_jmp_buf, CHILD_TO_PARENT );
 }
 
