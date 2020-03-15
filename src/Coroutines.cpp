@@ -128,7 +128,7 @@ void Coroutine::operator()()
   switch( val = setjmp(parent_jmp_buf) ) {                    
     case IMMEDIATE: {
       next_parent_jmp_buf = parent_jmp_buf;
-      jump_to_child();
+      jump_to_child( child_disabler );
     }
        
     case CHILD_TO_PARENT: {
@@ -149,10 +149,12 @@ void Coroutine::operator()()
 }
         
         
-void Coroutine::jump_to_child()
+void Coroutine::jump_to_child( function<void()> disabler )
 {
   // This is where we cease to be reentrant because we're starting to 
   // access member variables relating to child state
+  if( disabler )
+      disabler();
   
   switch( child_status ) {
     case READY: {
@@ -170,15 +172,17 @@ void Coroutine::jump_to_child()
 }
 
 
-void Coroutine::yield_nonstatic( function<void()> interrupt_enables )
+void Coroutine::yield_nonstatic( function<void()> enabler, function<void()> disabler )
 {
   ASSERT( magic == MAGIC, "bad this pointer or object corrupted: %p", this );
   ASSERT( child_status == RUNNING, "yield when child was not running, status %d", (int)child_status );
   
+  child_disabler = disabler;
+
   int val;
   switch( val = setjmp( child_jmp_buf ) ) {                    
     case IMMEDIATE: {
-      jump_to_parent( interrupt_enables );
+      jump_to_parent( enabler );
     }
     case PARENT_TO_CHILD: {
       // If the child has ever yielded, its context will come back to here
@@ -191,7 +195,7 @@ void Coroutine::yield_nonstatic( function<void()> interrupt_enables )
 }
 
 
-void Coroutine::jump_to_parent( function<void()> interrupt_enables )
+void Coroutine::jump_to_parent( function<void()> enabler )
 {
   // From here on, I believe the we can be re-entered via run_iteration().
   // The correct run_iteration calls will return in the correct order because
@@ -201,8 +205,8 @@ void Coroutine::jump_to_parent( function<void()> interrupt_enables )
   // Note: we're reentrant into run_iteration() but not recursive, since
   // this is the child's context.
   
-  if( interrupt_enables )
-      interrupt_enables(); // enable some interrupts - might get re-entered
+  if( enabler )
+      enabler(); // enable some interrupts - might get re-entered
   // Note: since we are still in the child's context, get_current() will 
   // return "this" as required, so the lambda can use it.
   
