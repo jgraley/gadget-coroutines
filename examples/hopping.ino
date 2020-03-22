@@ -1,5 +1,3 @@
-// JSG Note: This file taken from https://gist.github.com/jdneo/43be30d85080b175cb5aed3500d3f989
-
 #include "Coroutines.h"
 
 #define LED_PIN 13
