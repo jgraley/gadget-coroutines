@@ -1,10 +1,10 @@
 /*
-  Coroutines_ARM.h - Coroutines for Gadgets.
+  Coroutine_arm.h - Coroutines for Gadgets.
   Created by John Graley, 2020.
   (C) John Graley LGPL license applies.
 */
-#ifndef Coroutines_ARM_h
-#define Coroutines_ARM_h
+#ifndef Coroutine_arm_h
+#define Coroutine_arm_h
 
 #include <csetjmp> 
 #include <cstring>

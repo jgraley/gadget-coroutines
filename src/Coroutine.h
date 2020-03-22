@@ -1,27 +1,26 @@
 /**
- * Coroutines.h - Coroutines for Gadgets.
+ * Coroutine.h - Coroutines for Gadgets.
  * Created by John Graley, 2020.
  * (C) John Graley LGPL license applies.
  * 
  * Main Gadget Coroutine class
  */
-#ifndef Coroutines_h
-#define Coroutines_h
+#ifndef Coroutine_h
+#define Coroutine_h
+
+#if __cplusplus <= 199711L
+  #error This library needs at least a C++11 compliant compiler
+#endif
 
 #include "Coroutine_arm.h"
+#include "Task.h"
 
 #include <functional>
 #include <csetjmp> 
 #include <cstdint>
 #include "Arduino.h"
 
-#if __cplusplus <= 199711L
-  #error This library needs at least a C++11 compliant compiler
-#endif
-
-void gcoroutines_set_logger( std::function< void(const char *) > logger );
-
-class Coroutine
+class Coroutine : public Task
 {
 public:
   explicit Coroutine( std::function<void()> child_function_ ); 
