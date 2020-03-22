@@ -4,9 +4,9 @@
  * (C) John Graley LGPL license applies.
  */
 
-#include "Coroutines.h"
+#include "Coroutine.h"
 
-#include "Coroutines_ARM.h"
+#include "Coroutine_arm.h"
 #include "CoroTracing.h"
 #include "CoroIntegration.h"
 

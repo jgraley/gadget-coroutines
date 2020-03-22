@@ -6,7 +6,7 @@
  * Here, we integrate Gadget Coroutines into the Arduino environment.
  */
 
-#include "Coroutines.h"
+#include "Coroutine.h"
 
 #include <cstring>
 #include <functional>
