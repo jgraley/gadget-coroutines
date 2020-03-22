@@ -116,7 +116,7 @@ void Coroutine::prepare_child_jmp_buf( jmp_buf &child_jmp_buf, const jmp_buf &in
 }
 
 
-void Coroutine::operator()()
+void Coroutine::run_iteration()
 {
   check_valid_this();
   

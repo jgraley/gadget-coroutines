@@ -26,7 +26,6 @@ public:
   explicit Coroutine( std::function<void()> child_function_ ); 
   ~Coroutine();
     
-  void operator()();
   inline static Coroutine *get_current();
   inline static void yield( 
     std::function<void()> hop = std::function<void()>() );
@@ -50,6 +49,7 @@ private:
   byte *prepare_child_stack( byte *frame_end, byte *stack_pointer );
   void prepare_child_jmp_buf( jmp_buf &child_jmp_buf, const jmp_buf &initial_jmp_buf, byte *parent_stack_pointer, byte *child_stack_pointer );
   [[ noreturn ]] void child_main_function();
+  void run_iteration();
   void jump_to_child();
   void yield_nonstatic( std::function<void()> hop );
   [[ noreturn ]] void jump_to_parent();
