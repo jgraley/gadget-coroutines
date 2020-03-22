@@ -29,7 +29,7 @@ public:
   void operator()();
   inline static Coroutine *get_current();
   inline static void yield( 
-    std::function<void()> hop_ = std::function<void()>() );
+    std::function<void()> hop = std::function<void()>() );
 
 private:
   enum ChildStatus
@@ -51,7 +51,7 @@ private:
   void prepare_child_jmp_buf( jmp_buf &child_jmp_buf, const jmp_buf &initial_jmp_buf, byte *parent_stack_pointer, byte *child_stack_pointer );
   [[ noreturn ]] void child_main_function();
   void jump_to_child();
-  void yield_nonstatic( std::function<void()> hop_ );
+  void yield_nonstatic( std::function<void()> hop );
   [[ noreturn ]] void jump_to_parent();
   
   const std::function<void()> child_function; 
@@ -60,8 +60,7 @@ private:
   ChildStatus child_status;
   jmp_buf parent_jmp_buf;
   jmp_buf child_jmp_buf;
-  std::function<void()> hop;
-  std::function<void()> child_disabler;
+  std::function<void()> hop_lambda;
     
   static const int default_stack_size = 1024;
 };
