@@ -29,8 +29,7 @@ public:
   void operator()();
   inline static Coroutine *get_current();
   inline static void yield( 
-    std::function<void()> enabler = std::function<void()>(),
-    std::function<void()> disabler = std::function<void()>() );
+    std::function<void()> hop_ = std::function<void()>() );
 
 private:
   enum ChildStatus
@@ -52,7 +51,7 @@ private:
   void prepare_child_jmp_buf( jmp_buf &child_jmp_buf, const jmp_buf &initial_jmp_buf, byte *parent_stack_pointer, byte *child_stack_pointer );
   [[ noreturn ]] void child_main_function();
   void jump_to_child();
-  void yield_nonstatic( std::function<void()> enabler, std::function<void()> disabler );
+  void yield_nonstatic( std::function<void()> hop_ );
   [[ noreturn ]] void jump_to_parent();
   
   const uint32_t magic;
@@ -62,7 +61,7 @@ private:
   ChildStatus child_status;
   jmp_buf parent_jmp_buf;
   jmp_buf child_jmp_buf;
-  std::function<void()> child_enabler;
+  std::function<void()> hop;
   std::function<void()> child_disabler;
     
   static const int default_stack_size = 1024;
@@ -78,11 +77,11 @@ Coroutine *Coroutine::get_current()
 }
 
 
-void Coroutine::yield( std::function<void()> enabler, std::function<void()> disabler )
+void Coroutine::yield( std::function<void()> hop )
 {
   Coroutine * const that = get_current();
   if( that )
-    that->yield_nonstatic( enabler, disabler );
+    that->yield_nonstatic( hop );
 }
 
 #endif

@@ -121,10 +121,6 @@ void Coroutine::operator()()
 {
   ASSERT( magic == MAGIC, "bad this pointer or object corrupted: %p", this );
   
-  // This should prevent re-entry @TODO atomic?
-  if( child_disabler )
-      child_disabler();    
-
   // Save the current next parent jump buffer
   int val;
   switch( val = setjmp(parent_jmp_buf) ) {                    
@@ -143,9 +139,9 @@ void Coroutine::operator()()
   
   // This will cause re-entry if a higher priority interrupt is enabled
   // than whatever is runnig us now. It's OK as long as we leave it at 
-  // bottom of the function. @TODO atomic?
-  if( child_enabler )
-    child_enabler();
+  // bottom of the function.
+  if( hop )
+    hop();
 }
         
         
@@ -167,13 +163,12 @@ void Coroutine::jump_to_child()
 }
 
 
-void Coroutine::yield_nonstatic( function<void()> enabler, function<void()> disabler )
+void Coroutine::yield_nonstatic( function<void()> hop_ )
 {
   ASSERT( magic == MAGIC, "bad this pointer or object corrupted: %p", this );
   ASSERT( child_status == RUNNING, "yield when child was not running, status %d", (int)child_status );
   
-  child_enabler = enabler;
-  child_disabler = disabler;
+  hop = hop_;
 
   int val;
   switch( val = setjmp( child_jmp_buf ) ) {                    
