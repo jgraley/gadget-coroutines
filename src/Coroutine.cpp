@@ -161,7 +161,8 @@ void Coroutine::yield_nonstatic( function<void()> hop )
   check_valid_this();
   ASSERT( child_status == RUNNING, "yield when child was not running, status %d", (int)child_status );
   
-  set_hop_lambda(hop);
+  if( hop )
+    set_hop_lambda(hop);
 
   int val;
   switch( val = setjmp( child_jmp_buf ) ) {                    
