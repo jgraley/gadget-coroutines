@@ -22,7 +22,6 @@ using namespace std;
 #define CONSTRUCTOR_TRACE DISABLED_TRACE
 
 Coroutine::Coroutine( function<void()> child_function_ ) :
-  magic( MAGIC ),
   child_function( child_function_ ),
   stack_size( default_stack_size ),
   child_stack_memory( new byte[stack_size] ),
@@ -64,7 +63,7 @@ Coroutine::Coroutine( function<void()> child_function_ ) :
 
 Coroutine::~Coroutine()
 {
-  ASSERT( magic == MAGIC, "bad this pointer or object corrupted: %p", this );
+  check_valid_this();
   ASSERT( child_status == COMPLETE, "destruct when child was not complete, status %d", (int)child_status );
   delete[] child_stack_memory;
   bring_in_CoroIntegration();
@@ -102,7 +101,7 @@ void Coroutine::prepare_child_jmp_buf( jmp_buf &child_jmp_buf, const jmp_buf &in
 
 [[ noreturn ]] void Coroutine::child_main_function()
 {
-  ASSERT( magic == MAGIC, "bad this pointer or object corrupted: %p", this ); 
+  check_valid_this();
   child_status = RUNNING;
     
   // Invoke the child. We take the view that this is enough to give
@@ -119,7 +118,7 @@ void Coroutine::prepare_child_jmp_buf( jmp_buf &child_jmp_buf, const jmp_buf &in
 
 void Coroutine::operator()()
 {
-  ASSERT( magic == MAGIC, "bad this pointer or object corrupted: %p", this );
+  check_valid_this();
   
   // Save the current next parent jump buffer
   int val;
@@ -165,7 +164,7 @@ void Coroutine::jump_to_child()
 
 void Coroutine::yield_nonstatic( function<void()> hop_ )
 {
-  ASSERT( magic == MAGIC, "bad this pointer or object corrupted: %p", this );
+  check_valid_this();
   ASSERT( child_status == RUNNING, "yield when child was not running, status %d", (int)child_status );
   
   hop = hop_;
@@ -192,10 +191,3 @@ void Coroutine::jump_to_parent()
 }
 
 
-constexpr uint32_t make_magic_le(const char *str)
-{
-  return str[0] | (str[1]<<8) | (str[2]<<16) | (str[3]<<24);
-}
-
-
-const uint32_t Coroutine::MAGIC = make_magic_le("GCo1");

@@ -54,7 +54,6 @@ private:
   void yield_nonstatic( std::function<void()> hop_ );
   [[ noreturn ]] void jump_to_parent();
   
-  const uint32_t magic;
   const std::function<void()> child_function; 
   const int stack_size;
   byte * const child_stack_memory;
@@ -65,7 +64,6 @@ private:
   std::function<void()> child_disabler;
     
   static const int default_stack_size = 1024;
-  static const uint32_t MAGIC;
 };
 
 ///-- 
