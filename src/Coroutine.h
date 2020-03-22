@@ -60,7 +60,6 @@ private:
   ChildStatus child_status;
   jmp_buf parent_jmp_buf;
   jmp_buf child_jmp_buf;
-  std::function<void()> hop_lambda;
     
   static const int default_stack_size = 1024;
 };

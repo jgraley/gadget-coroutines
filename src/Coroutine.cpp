@@ -134,13 +134,7 @@ void Coroutine::run_iteration()
     default: {
       ERROR("unexpected longjmp value: %d", val);
     }
-  }
-  
-  // This will cause re-entry if a higher priority interrupt is enabled
-  // than whatever is runnig us now. It's OK as long as we leave it at 
-  // bottom of the function.
-  if( hop_lambda )
-    hop_lambda();
+  }  
 }
         
         
@@ -167,7 +161,7 @@ void Coroutine::yield_nonstatic( function<void()> hop )
   check_valid_this();
   ASSERT( child_status == RUNNING, "yield when child was not running, status %d", (int)child_status );
   
-  hop = hop;
+  set_hop_lambda(hop);
 
   int val;
   switch( val = setjmp( child_jmp_buf ) ) {                    
