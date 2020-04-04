@@ -1,6 +1,3 @@
-SuperFunctor.cpp:29 Grabbed PC: 0x43f2; start of function:0x43ed
-
-SuperFunctor.cpp:36 Size of member function pointer: 8
-
-SuperFunctor.cpp:37 As uint32_t: 43eb 0
-
+SuperFunctor.cpp:49 Grabbed PC: 0x43f2; function pointer:0x43ed
+SuperFunctor.cpp:62 Size of member function pointer: 8
+SuperFunctor.cpp:63 As uint32_t: 0 1
