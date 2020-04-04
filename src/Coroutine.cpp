@@ -9,6 +9,7 @@
 #include "Coroutine_arm.h"
 #include "CoroTracing.h"
 #include "CoroIntegration.h"
+#include "RAII_CLS.h"
 
 #include <cstring>
 #include <functional>
@@ -50,7 +51,7 @@ Coroutine::Coroutine( function<void()> child_function_ ) :
       break;
     }
     case PARENT_TO_CHILD_STARTING: {
-      CONSTRUCTOR_TRACE("this=%p that=%p sp=%p", this, get_current(), get_sp());
+      CONSTRUCTOR_TRACE("this=%p me=%p sp=%p", this, me(), get_sp());
       child_main_function();            
     }
     default: {
@@ -162,7 +163,13 @@ void Coroutine::yield_nonstatic( function<void()> hop )
   ASSERT( child_status == RUNNING, "yield when child was not running, status %d", (int)child_status );
   
   if( hop )
-    set_hop_lambda(hop);
+  {
+    set_hop_lambda( [=]
+    {
+        RAII_CLS raii_cls(this);
+        hop();
+    } );
+  }
 
   int val;
   switch( val = setjmp( child_jmp_buf ) ) {                    

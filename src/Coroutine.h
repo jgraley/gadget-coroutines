@@ -26,7 +26,7 @@ public:
   explicit Coroutine( std::function<void()> child_function_ ); 
   ~Coroutine();
     
-  inline static Coroutine *get_current();
+  inline static Coroutine *me();
   inline static void yield( 
     std::function<void()> hop = std::function<void()>() );
 
@@ -67,7 +67,7 @@ private:
 ///-- 
 // Implement the inline functions here
 
-Coroutine *Coroutine::get_current()
+Coroutine *Coroutine::me()
 {
   return (Coroutine *)( get_cls() );
 }
@@ -75,9 +75,9 @@ Coroutine *Coroutine::get_current()
 
 void Coroutine::yield( std::function<void()> hop )
 {
-  Coroutine * const that = get_current();
-  if( that )
-    that->yield_nonstatic( hop );
+  Coroutine * const me_value = me();
+  if( me_value )
+    me_value->yield_nonstatic( hop );
 }
 
 #endif
