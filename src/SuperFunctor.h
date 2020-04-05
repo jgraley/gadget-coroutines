@@ -11,25 +11,30 @@
 class SuperFunctor
 {
 public:
-  typedef void (SuperFunctor::* EntryPoint)();
   SuperFunctor();
-  void SetEntrypoint( EntryPoint ep );
+  virtual ~SuperFunctor();
+  typedef void (*EntryPointFP)();
+  EntryPointFP GetEntryPoint();
+
+protected:  
   virtual void operator()();    
 
 public:     // TODO private
+  typedef void (SuperFunctor::* EntryPointMFP)();
+  typedef void (*EntryPointFPT)( SuperFunctor *this_ );
   typedef uint16_t ThumbInstruction;
+  
   static std::pair<ThumbInstruction *, int> GetAssembly();
+  EntryPointFPT UnpackMemberFunctionPointer( EntryPointMFP mfp );
+
   ThumbInstruction entrypoint_thunk[MAX_INSTRUCTIONS];
-  EntryPoint entrypoint_mfp; // TODO be a normal function pointer
-};
+  EntryPointFPT entrypoint_fpt; 
 
 #ifdef SUPERFUNCTOR_TESTS  
-class TestClient : SuperFunctor
-{
 public:
   static void TestPCRelative();
   static void TestMemberFunctionPointer(); 
-};
+  static void TestUnpack(); 
 #endif
-
+};
 #endif
