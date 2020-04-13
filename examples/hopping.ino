@@ -11,7 +11,7 @@ void TC3_Handler();
 volatile bool enable_fg = true;
 
 #include "sam.h"
-extern DeviceVectors exception_table;
+extern volatile DeviceVectors exception_table;
 
 Coroutine led_flasher([]()
 {
@@ -25,7 +25,6 @@ Coroutine led_flasher([]()
   
       // "Hop" on to the interrupt
       enable_fg=false; 
-      //exception_table.pfnTC3_Handler = (void *)(me()->GetEntryPoint());
       Coroutine::yield([](){ NVIC_EnableIRQ(TC3_IRQn); }); 
       TC->INTFLAG.bit.MC0 = 1;
   
@@ -100,18 +99,11 @@ void startTimer(int frequencyHz) {
 }
 
 void TC3_Handler() {
-  auto fp = led_flasher.GetEntryPoint();
-  fp();
+  led_flasher();
 }
 
 void loop()
 {
-  uint8_t *fp = (uint8_t *)(led_flasher.GetEntryPoint());
-  uint8_t *code = fp-1;  // take off the "thumb" bit  
-  TRACE("fp=%p code=%p: %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x | this=%p fpt=%p", 
-        fp, code,
-        code[0], code[1], code[2], code[3], code[4], code[5], code[6], code[7], code[8], code[9], code[10], code[11],
-        &led_flasher, led_flasher.entrypoint_fpt);
   if( enable_fg )
   {
     led_flasher();
