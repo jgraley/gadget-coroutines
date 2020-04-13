@@ -22,7 +22,7 @@ SuperFunctor::~SuperFunctor()
 SuperFunctor::EntryPointFP SuperFunctor::GetEntryPoint()
 {
     auto ep_word = (uint32_t )entrypoint_thunk;
-    ep_word != 1; // set the "thumb" bit
+    ep_word |= 1; // set the "thumb" bit
     return (EntryPointFP)ep_word;
 }
 
