@@ -132,7 +132,7 @@ void what_was_loop()
     Debug(1);
    
     len = t1 - t0;
-    if( len > 72 )
+    if( len > 84 )
     {
       break;
     }    
