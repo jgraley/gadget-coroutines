@@ -1,3 +1,5 @@
+#define HOP_PIN_INTERRUPT
+
 #include "Coroutine.h"
 #include <Adafruit_DotStar.h>
 #include "wiring_private.h"
@@ -17,6 +19,7 @@ Adafruit_DotStar strip = Adafruit_DotStar(
 
 volatile unsigned char dmx_frame[513];
 volatile int dmx_frame_index=0;
+volatile bool enable_fg = true;
 
 SERCOM *dmx_sercom = &sercom0;
 // Note: we are coding direct to the SERCOM API since we want to implement the ISR ourselves
@@ -86,37 +89,72 @@ inline void Debug(int d)
 }
 
 volatile int val=-1;
-void dmxLineISR()
+
+extern volatile uint32_t _ulTickCount;
+unsigned long my_micros( void )
 {
-  val=digitalRead(DMX_RX_PIN);  
+  uint32_t ticks  = SysTick->VAL;
+  uint32_t pend   = !!(SCB->ICSR & SCB_ICSR_PENDSTSET_Msk)  ;
+  uint32_t count  = _ulTickCount ;
+  return ((count+pend) * 1000) + (((SysTick->LOAD  - ticks)*(1048576/(VARIANT_MCK/1000000)))>>20) ;
 }
 
 void what_was_loop()
 {
   int len;
+    Debug(2);
+  
+#ifdef HOP_PIN_INTERRUPT
+    // "Hop" on to the interrupt
+    enable_fg=false; 
+    Coroutine::yield([](){ attachInterrupt(DMX_RX_PIN, dmxLineISR, CHANGE); }); 
+#else    
+    attachInterrupt(DMX_RX_PIN, dmxLineISR, CHANGE);
+#endif
   while(1)
   {
     Debug(0);
-    
+
     val=-1;
-    attachInterrupt(DMX_RX_PIN, dmxLineISR, CHANGE);
-    while(val!=0);
-    int t0 = micros();
-    while(val!=1);
-    int t1 = micros();
-    int v1 = val;
-    
+    while(val!=0)
+    {
+#ifdef HOP_PIN_INTERRUPT
+       val=digitalRead(DMX_RX_PIN);  
+       if( val!=0 )
+         yield();
+#endif    
+    }
+    noInterrupts();
+    int t0 = my_micros();
+    interrupts();
+    yield();
+    while(val!=1)
+    {
+#ifdef HOP_PIN_INTERRUPT
+       val=digitalRead(DMX_RX_PIN);  
+       if( val!=1 )
+         yield();
+#endif    
+    }    
+    noInterrupts();
+    int t1 = my_micros();
+    interrupts();
+
     Debug(1);
-    
+   
     len = t1 - t0;
     if( len > 72 )
     {
-      //TRACE("%dus", len);
-      
       break;
     }    
   }
+#ifdef HOP_PIN_INTERRUPT
+  // "Hop" back to foreground
   detachInterrupt(DMX_RX_PIN);
+  Coroutine::yield([](){ enable_fg=true; }); 
+#else
+  detachInterrupt(DMX_RX_PIN);
+#endif
   dmx_uart_claim_pins();
   
   Debug(3);  
@@ -149,7 +187,19 @@ Coroutine dmx_loop([]{
   }
 });
 
+
 void loop()
 {
+  if( enable_fg )
+    dmx_loop();
+}
+
+
+void dmxLineISR()
+{
+#ifdef HOP_PIN_INTERRUPT
   dmx_loop();
+#else
+  val=digitalRead(DMX_RX_PIN);  
+#endif  
 }
