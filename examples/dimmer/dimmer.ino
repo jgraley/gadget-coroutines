@@ -1,11 +1,6 @@
-#define USE_SERCOM
-
 #include "Coroutine.h"
 #include <Adafruit_DotStar.h>
-
-#ifdef USE_SERCOM
 #include "wiring_private.h"
-#endif
 
 #define DOTSTAR_NUMPIXELS 1 
 #define DOTSTAR_DATAPIN   7
@@ -24,11 +19,9 @@ Adafruit_DotStar strip = Adafruit_DotStar(
 volatile unsigned char dmx_frame[513];
 volatile int dmx_frame_index=0;
 
-
-#ifdef USE_SERCOM
-
 SERCOM *dmx_sercom = &sercom0;
 // Note: we are coding direct to the SERCOM API since we want to implement the ISR ourselves
+
 void dmx_uart_init()
 {
   // PIN_SERIAL1_RX, PIN_SERIAL1_TX, PAD_SERIAL1_RX, PAD_SERIAL1_TX, NO_RTS_PIN, NO_CTS_PIN
@@ -76,7 +69,6 @@ void SERCOM0_Handler()
     dmx_sercom->clearStatusUART();
   }
 }
-#endif // USE_SERCOM
 
 void setup() {  
   pinMode(RED_LED_PIN, OUTPUT);
@@ -102,9 +94,6 @@ void dmxLineISR()
 
 void loop()
 {
-  //while(1)
-  //  TRACE("%u", SysTick->VAL);
-  
   int len;
   while(1)
   {
@@ -129,25 +118,12 @@ void loop()
     }    
   }
   detachInterrupt(DMX_RX_PIN);
-#ifdef USE_SERCOM
   dmx_uart_claim_pins();
-#else  
-  Serial1.clear_read();
-  Serial1.begin(DMX_BAUDRATE, SERIAL_8N2);
-#endif  
   
   Debug(3);  
 
-#ifdef USE_SERCOM
+  // Wait for the SERCOM ISR to fill the buffer
   for( dmx_frame_index=0; dmx_frame_index<(int)sizeof(dmx_frame); );
-#else
-  for( dmx_frame_index=0; dmx_frame_index<(int)sizeof(dmx_frame); dmx_frame_index++ )
-  {
-    while(!Serial1.available());
-    int b = Serial1.read();
-    dmx_frame[dmx_frame_index] = b;
-  }
-#endif
 
   Debug(2);      
 
