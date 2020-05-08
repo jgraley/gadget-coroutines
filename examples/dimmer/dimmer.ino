@@ -78,7 +78,6 @@ void setup() {
   pinMode(RED_LED_PIN, OUTPUT);
   pinMode(DEBUG_PIN1, OUTPUT);
   pinMode(DEBUG_PIN2, OUTPUT);
-  Serial1.begin(DMX_BAUDRATE);
   strip.begin(); // Initialize pins for output
   strip.show();  // Turn all LEDs off ASAP
 }  
@@ -129,7 +128,7 @@ void loop()
   begin_serial();
 #else  
   Serial1.clear_read();
-  Serial1.begin(250000, SERIAL_8N2);
+  Serial1.begin(DMX_BAUDRATE, SERIAL_8N2);
 #endif  
   
   Debug(3);  
