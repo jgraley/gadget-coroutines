@@ -8,7 +8,6 @@
 
 Adafruit_DotStar strip = Adafruit_DotStar(
   DOTSTAR_NUMPIXELS, DOTSTAR_DATAPIN, DOTSTAR_CLOCKPIN, DOTSTAR_BGR);
-
   
 #define RED_LED_PIN 13
 #define DMX_RX_PIN 3
@@ -92,7 +91,7 @@ void dmxLineISR()
   val=digitalRead(DMX_RX_PIN);  
 }
 
-void loop()
+void what_was_loop()
 {
   int len;
   while(1)
@@ -139,4 +138,18 @@ void loop()
       digitalWrite(RED_LED_PIN, LOW);
   strip.setPixelColor(0, (c[0]<<16) + (c[1]<<8) + c[2]);
   strip.show();
+}
+
+
+Coroutine dmx_loop([]{
+  while(1)
+  {
+    what_was_loop();
+    yield();
+  }
+});
+
+void loop()
+{
+  dmx_loop();
 }
