@@ -1,4 +1,5 @@
 #define HOP_PIN_INTERRUPT
+#define HOP_UART_INTERRUPT
 
 #include "Coroutine.h"
 #include <Adafruit_DotStar.h>
@@ -20,6 +21,7 @@ Adafruit_DotStar strip = Adafruit_DotStar(
 volatile unsigned char dmx_frame[513];
 volatile int dmx_frame_index=0;
 volatile bool enable_fg = true;
+volatile bool enable_sercom_isr = false; // we'd have to bypass SERCOM layer to enable/disable ISR, so pretend
 
 SERCOM *dmx_sercom = &sercom0;
 // Note: we are coding direct to the SERCOM API since we want to implement the ISR ourselves
@@ -41,7 +43,7 @@ void dmx_uart_claim_pins()
   pinPeripheral(PIN_SERIAL1_TX, g_APinDescription[PIN_SERIAL1_TX].ulPinType);
 }
 
-void SERCOM0_Handler()  
+void read_byte_from_uart()
 {
   if (dmx_sercom->isFrameErrorUART()) {
     // frame error, next byte is invalid so read and discard it
@@ -71,6 +73,7 @@ void SERCOM0_Handler()
     dmx_sercom->clearStatusUART();
   }
 }
+
 
 void setup() {  
   pinMode(RED_LED_PIN, OUTPUT);
@@ -105,7 +108,7 @@ void what_was_loop()
     Debug(2);
   
 #ifdef HOP_PIN_INTERRUPT
-    // "Hop" on to the interrupt
+    // "Hop" on to the pin interrupt
     enable_fg=false; 
     Coroutine::yield([](){ attachInterrupt(DMX_RX_PIN, dmxLineISR, CHANGE); }); 
 #else    
@@ -148,21 +151,42 @@ void what_was_loop()
       break;
     }    
   }
+  detachInterrupt(DMX_RX_PIN);
 #ifdef HOP_PIN_INTERRUPT
-  // "Hop" back to foreground
-  detachInterrupt(DMX_RX_PIN);
-  Coroutine::yield([](){ enable_fg=true; }); 
+#ifdef HOP_UART_INTERRUPT
+  // "Hop" sideways to UART interrupt
+  Coroutine::yield([](){ dmx_uart_claim_pins();
+                         enable_sercom_isr = true; }); 
 #else
-  detachInterrupt(DMX_RX_PIN);
-#endif
+  // "Hop" back to foreground
+  Coroutine::yield([](){ enable_fg=true; });   
   dmx_uart_claim_pins();
-  
+  enable_sercom_isr = true;
+#endif  
+#else
+  dmx_uart_claim_pins();
+  enable_sercom_isr = true;
+#endif
+
   Debug(3);  
 
   // Wait for the SERCOM ISR to fill the buffer
-  for( dmx_frame_index=0; dmx_frame_index<(int)sizeof(dmx_frame); );
+  for( dmx_frame_index=0; dmx_frame_index<(int)sizeof(dmx_frame); )
+  {
+#ifdef HOP_UART_INTERRUPT
+    read_byte_from_uart();
+    if( dmx_frame_index<(int)sizeof(dmx_frame) )
+      yield();    // yield if will iterate again (i.e. need another byte)
+#endif      
+  }
 
   Debug(2);      
+
+#ifdef HOP_UART_INTERRUPT
+  enable_sercom_isr = false;
+  // "Hop" back to foreground
+  Coroutine::yield([](){ enable_fg=true; });   
+#endif
 
   if( dmx_frame[0] != 0 )
     return; // not regular DMX
@@ -201,5 +225,16 @@ void dmxLineISR()
   dmx_loop();
 #else
   val=digitalRead(DMX_RX_PIN);  
+#endif  
+}
+
+
+void SERCOM0_Handler()  
+{
+#ifdef HOP_UART_INTERRUPT
+  if( enable_sercom_isr )
+      dmx_loop();
+#else
+  read_byte_from_uart();
 #endif  
 }
