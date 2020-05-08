@@ -119,9 +119,7 @@ void what_was_loop()
        if( val!=0 )
          yield();
     }
-    noInterrupts();
     int t0 = my_micros();
-    interrupts();
     yield();
     while(val!=1)
     {
@@ -129,9 +127,7 @@ void what_was_loop()
        if( val!=1 )
          yield();
     }    
-    noInterrupts();
     int t1 = my_micros();
-    interrupts();
 
     Debug(1);
    
