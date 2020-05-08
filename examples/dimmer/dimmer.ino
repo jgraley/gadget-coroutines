@@ -29,17 +29,21 @@ volatile int dmx_frame_index=0;
 
 SERCOM *dmx_sercom = &sercom0;
 // Note: we are coding direct to the SERCOM API since we want to implement the ISR ourselves
-void begin_serial()
+void dmx_uart_init()
 {
   // PIN_SERIAL1_RX, PIN_SERIAL1_TX, PAD_SERIAL1_RX, PAD_SERIAL1_TX, NO_RTS_PIN, NO_CTS_PIN
-  pinPeripheral(PIN_SERIAL1_RX, g_APinDescription[PIN_SERIAL1_RX].ulPinType);
-  pinPeripheral(PIN_SERIAL1_TX, g_APinDescription[PIN_SERIAL1_TX].ulPinType);
-
   dmx_sercom->initUART(UART_INT_CLOCK, SAMPLE_RATE_x16, DMX_BAUDRATE);
   dmx_sercom->initFrame(UART_CHAR_SIZE_8_BITS, LSB_FIRST, SERCOM_NO_PARITY, SERCOM_STOP_BITS_2);
   dmx_sercom->initPads(PAD_SERIAL1_TX, PAD_SERIAL1_RX);
 
   dmx_sercom->enableUART();
+}
+
+void dmx_uart_claim_pins()
+{
+  // PIN_SERIAL1_RX, PIN_SERIAL1_TX, PAD_SERIAL1_RX, PAD_SERIAL1_TX, NO_RTS_PIN, NO_CTS_PIN
+  pinPeripheral(PIN_SERIAL1_RX, g_APinDescription[PIN_SERIAL1_RX].ulPinType);
+  pinPeripheral(PIN_SERIAL1_TX, g_APinDescription[PIN_SERIAL1_TX].ulPinType);
 }
 
 void SERCOM0_Handler()  
@@ -80,6 +84,7 @@ void setup() {
   pinMode(DEBUG_PIN2, OUTPUT);
   strip.begin(); // Initialize pins for output
   strip.show();  // Turn all LEDs off ASAP
+  dmx_uart_init();
 }  
 
 
@@ -125,7 +130,7 @@ void loop()
   }
   detachInterrupt(DMX_RX_PIN);
 #ifdef USE_SERCOM
-  begin_serial();
+  dmx_uart_claim_pins();
 #else  
   Serial1.clear_read();
   Serial1.begin(DMX_BAUDRATE, SERIAL_8N2);
