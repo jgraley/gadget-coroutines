@@ -97,18 +97,26 @@ unsigned long my_micros( void )
   return ((count+pend) * 1000) + (((SysTick->LOAD  - ticks)*(1048576/(VARIANT_MCK/1000000)))>>20) ;
 }
 
-void what_was_loop()
-{
-  int len;
 
+void receive_frame()
+{
   Debug(0);
-  
-  // "Hop" on to the pin interrupt
-  enable_fg=false; 
-  Coroutine::yield([](){ attachInterrupt(DMX_RX_PIN, dmxLineISR, CHANGE); }); 
-  while(1)
+
+  int len;
+  bool first = true;
+  do
   {
-    Debug(0);
+    if( first )
+    {
+      // "Hop" on to the pin interrupt
+      enable_fg=false; 
+      Coroutine::yield([](){ attachInterrupt(DMX_RX_PIN, dmxLineISR, CHANGE); }); 
+      first = false;
+    }
+    else
+    {
+      yield();
+    }    
 
     while(digitalRead(DMX_RX_PIN)!=0)
       yield();   
@@ -120,25 +128,19 @@ void what_was_loop()
       yield();
   
     int t1 = my_micros();
-    
-    Debug(1);
-   
+      
     len = t1 - t0;
-    if( len >= 72 )
-    {
-      break;
-    }    
-    yield();
-  }
+  } while( len < 72 );
+  
   detachInterrupt(DMX_RX_PIN);
   // "Hop" to UART interrupt
   Coroutine::yield([](){ dmx_uart_shutdown();
                          dmx_uart_claim_pins();
                          dmx_uart_init(); }); 
-  frame_error = false;
 
   Debug(3);  
   
+  frame_error = false;
   uint8_t start_code = read_byte_from_uart();
   if( frame_error )
     goto DMX_ERROR;
@@ -179,14 +181,13 @@ DMX_ERROR:
       digitalWrite(RED_LED_PIN, LOW);
   strip.setPixelColor(0, (dmx_frame[0]<<16) + (dmx_frame[1]<<8) + dmx_frame[2]);
   strip.show();
-
 }
 
 
 Coroutine dmx_loop([]{
   while(1)
   {
-    what_was_loop();
+    receive_frame();
     yield();
   }
 });
