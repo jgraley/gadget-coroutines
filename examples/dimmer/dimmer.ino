@@ -102,13 +102,20 @@ void what_was_loop()
   int len;
 
   Debug(0);
-  
-  // "Hop" on to the pin interrupt
-  enable_fg=false; 
-  Coroutine::yield([](){ attachInterrupt(DMX_RX_PIN, dmxLineISR, CHANGE); }); 
-  while(1)
+
+  bool first = true;
+  do
   {
-    Debug(0);
+    if( first )
+    {
+      // "Hop" on to the pin interrupt
+      enable_fg=false; 
+      Coroutine::yield([](){ attachInterrupt(DMX_RX_PIN, dmxLineISR, CHANGE); });       
+    }
+    else
+    {
+      yield();
+    }
 
     while(digitalRead(DMX_RX_PIN)!=0)
       yield();   
@@ -120,16 +127,11 @@ void what_was_loop()
       yield();
   
     int t1 = my_micros();
-    
-    Debug(1);
-   
+      
     len = t1 - t0;
-    if( len >= 72 )
-    {
-      break;
-    }    
-    yield();
-  }
+
+  } while( len < 72 );
+  
   detachInterrupt(DMX_RX_PIN);
   // "Hop" to UART interrupt
   Coroutine::yield([](){ dmx_uart_shutdown();
