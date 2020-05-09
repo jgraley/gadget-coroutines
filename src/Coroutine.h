@@ -30,6 +30,8 @@ public:
   inline static void yield( 
     std::function<void()> hop = std::function<void()>() );
 
+  std::pair<const byte *, const byte *> get_child_stack_bounds();
+
 private:
   enum ChildStatus
   {
@@ -61,7 +63,7 @@ private:
   jmp_buf parent_jmp_buf;
   jmp_buf child_jmp_buf;
     
-  static const int default_stack_size = 1024;
+  static const int default_stack_size = 4096;
 };
 
 ///-- 

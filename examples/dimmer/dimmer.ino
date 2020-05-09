@@ -15,7 +15,6 @@ Adafruit_DotStar strip = Adafruit_DotStar(
 #define DEBUG_PIN2 1
 #define DMX_BAUDRATE 250000
 
-volatile unsigned char dmx_frame[513];
 volatile bool enable_fg = true;
 
 SERCOM *dmx_sercom = &sercom0;
@@ -139,6 +138,7 @@ void what_was_loop()
   frame_error = false;
 
   Debug(3);  
+  uint8_t dmx_frame[513];
 
   // Wait for the SERCOM ISR to fill the buffer
   for( int i=0; i<(int)sizeof(dmx_frame); i++ )

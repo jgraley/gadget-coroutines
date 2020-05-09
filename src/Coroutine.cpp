@@ -71,6 +71,12 @@ Coroutine::~Coroutine()
 }
 
 
+pair<const byte *, const byte *> Coroutine::get_child_stack_bounds()
+{
+    return make_pair(child_stack_memory, child_stack_memory+stack_size);
+}
+
+
 byte *Coroutine::prepare_child_stack( byte *frame_end, byte *stack_pointer )
 {
   // Decide how much stack to keep (basically the current frame, i.e. the 
