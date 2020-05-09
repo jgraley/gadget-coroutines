@@ -15,6 +15,7 @@ Adafruit_DotStar strip = Adafruit_DotStar(
 #define DEBUG_PIN2 1
 #define DMX_BAUDRATE 250000
 
+volatile unsigned char dmx_frame[513];
 volatile bool enable_fg = true;
 
 SERCOM *dmx_sercom = &sercom0;
@@ -138,47 +139,38 @@ void what_was_loop()
   frame_error = false;
 
   Debug(3);  
-  
-  uint8_t start_code;
-
-  start_code = read_byte_from_uart();
-  if( frame_error )
-    goto FRAME_ERROR;
-  yield();
-    
-  if( start_code != 0 )
-    return; // not regular DMX
-
-  uint8_t dmx_frame[512];
 
   // Wait for the SERCOM ISR to fill the buffer
   for( int i=0; i<(int)sizeof(dmx_frame); i++ )
   {
     dmx_frame[i] = read_byte_from_uart();
     if( frame_error )
-      goto FRAME_ERROR;
+      break;
     if( i+1<(int)sizeof(dmx_frame))
       yield();    // yield if will iterate again (i.e. need another byte)
   }
 
   Debug(frame_error?2:3);      
 
-FRAME_ERROR:
   dmx_uart_shutdown();
   // "Hop" back to foreground
   Coroutine::yield([](){ enable_fg=true; });   
 
   if( frame_error )
     return;
+
+  if( dmx_frame[0] != 0 )
+    return; // not regular DMX
+
+  auto *c = dmx_frame+1;
   
-  //TRACE("%dus: %d %d %d %d %d %d", len, dmx_frame[0], dmx_frame[1], dmx_frame[2], dmx_frame[3], dmx_frame[4], dmx_frame[5] );
-  if( dmx_frame[3] >= 128 )
+  //TRACE("%dus: %d %d %d %d %d %d", len, c[0], c[1], c[2], c[3], c[4], c[5] );
+  if( c[3] >= 128 )
       digitalWrite(RED_LED_PIN, HIGH);
   else 
       digitalWrite(RED_LED_PIN, LOW);
-  strip.setPixelColor(0, (dmx_frame[0]<<16) + (dmx_frame[1]<<8) + dmx_frame[2]);
+  strip.setPixelColor(0, (c[0]<<16) + (c[1]<<8) + c[2]);
   strip.show();
-
 }
 
 
