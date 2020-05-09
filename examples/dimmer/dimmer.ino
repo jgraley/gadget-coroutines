@@ -1,4 +1,4 @@
-#define HOP_PIN_INTERRUPT
+//#define HOP_PIN_INTERRUPT
 #define HOP_UART_INTERRUPT
 
 #include "Coroutine.h"
@@ -108,15 +108,17 @@ unsigned long my_micros( void )
 void what_was_loop()
 {
   int len;
-    Debug(2);
+
+  Debug(2);
   
 #ifdef HOP_PIN_INTERRUPT
-    // "Hop" on to the pin interrupt
-    enable_fg=false; 
-    Coroutine::yield([](){ attachInterrupt(DMX_RX_PIN, dmxLineISR, CHANGE); }); 
+  // "Hop" on to the pin interrupt
+  enable_fg=false; 
+  Coroutine::yield([](){ attachInterrupt(DMX_RX_PIN, dmxLineISR, CHANGE); }); 
 #else    
-    attachInterrupt(DMX_RX_PIN, dmxLineISR, CHANGE);
+  attachInterrupt(DMX_RX_PIN, dmxLineISR, CHANGE);
 #endif
+
   while(1)
   {
     Debug(0);
@@ -156,6 +158,9 @@ void what_was_loop()
   }
   detachInterrupt(DMX_RX_PIN);
 #if defined(HOP_UART_INTERRUPT)
+#if !defined(HOP_PIN_INTERRUPT)
+  enable_fg=false; 
+#endif
   // "Hop" to UART interrupt
   Coroutine::yield([](){ dmx_uart_claim_pins();
                          dmx_uart_init(); }); 
