@@ -115,17 +115,15 @@ void what_was_loop()
 
     while(digitalRead(DMX_RX_PIN)!=0)
       yield();   
-    noInterrupts();
+
     int t0 = my_micros();
-    interrupts();
     yield();
+    
     while(digitalRead(DMX_RX_PIN)!=1)
       yield();
   
-    noInterrupts();
     int t1 = my_micros();
-    interrupts();
-
+    
     Debug(1);
    
     len = t1 - t0;
@@ -133,6 +131,7 @@ void what_was_loop()
     {
       break;
     }    
+    yield();
   }
   detachInterrupt(DMX_RX_PIN);
   // "Hop" to UART interrupt
