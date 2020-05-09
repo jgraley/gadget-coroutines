@@ -47,13 +47,24 @@ void dmx_uart_claim_pins()
   pinPeripheral(PIN_SERIAL1_TX, g_APinDescription[PIN_SERIAL1_TX].ulPinType);
 }
 
-void read_byte_from_uart()
+void handle_UART_error()
 {
   if (dmx_sercom->isFrameErrorUART()) {
     // frame error, next byte is invalid so read and discard it
     dmx_sercom->readDataUART();
 
     dmx_sercom->clearFrameErrorUART();
+  }  
+  // TODO: if (sercom->isBufferOverflowErrorUART()) ....
+  // TODO: if (sercom->isParityErrorUART()) ....
+}
+
+void read_byte_from_uart()
+{
+  if (dmx_sercom->isUARTError()) {
+    dmx_sercom->acknowledgeUARTError();
+    handle_UART_error();
+    dmx_sercom->clearStatusUART();
   }
 
   if (dmx_sercom->availableDataUART()) {
@@ -69,13 +80,6 @@ void read_byte_from_uart()
       dmx_sercom->disableDataRegisterEmptyInterruptUART();
     }
   }*/
-
-  if (dmx_sercom->isUARTError()) {
-    dmx_sercom->acknowledgeUARTError();
-    // TODO: if (sercom->isBufferOverflowErrorUART()) ....
-    // TODO: if (sercom->isParityErrorUART()) ....
-    dmx_sercom->clearStatusUART();
-  }
 }
 
 
