@@ -1,4 +1,4 @@
-//#define HOP_PIN_INTERRUPT
+#define HOP_PIN_INTERRUPT
 #define HOP_UART_INTERRUPT
 
 #include "Coroutine.h"
@@ -151,7 +151,7 @@ void what_was_loop()
     Debug(1);
    
     len = t1 - t0;
-    if( len > 72 )
+    if( len >= 88 )
     {
       break;
     }    
