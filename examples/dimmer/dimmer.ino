@@ -139,13 +139,15 @@ void what_was_loop()
 
   Debug(3);  
   
-  uint8_t start_code = read_byte_from_uart();
+  uint8_t start_code;
+
+  start_code = read_byte_from_uart();
   if( frame_error )
-    goto DMX_ERROR;
+    goto FRAME_ERROR;
   yield();
     
   if( start_code != 0 )
-    goto DMX_ERROR; // not regular DMX
+    return; // not regular DMX
 
   uint8_t dmx_frame[512];
 
@@ -154,20 +156,17 @@ void what_was_loop()
   {
     dmx_frame[i] = read_byte_from_uart();
     if( frame_error )
-      goto DMX_ERROR;
+      goto FRAME_ERROR;
     if( i+1<(int)sizeof(dmx_frame))
       yield();    // yield if will iterate again (i.e. need another byte)
   }
 
   Debug(frame_error?2:3);      
 
-DMX_ERROR:
+FRAME_ERROR:
   dmx_uart_shutdown();
   // "Hop" back to foreground
   Coroutine::yield([](){ enable_fg=true; });   
-
-  if( start_code != 0 )
-    return; // not regular DMX
 
   if( frame_error )
     return;
