@@ -80,7 +80,6 @@ void Coroutine::yield( std::function<void()> hop )
     me_value->yield_nonstatic( hop );
 }
 
-
 inline Coroutine *me()
 {
     return Coroutine::me();
