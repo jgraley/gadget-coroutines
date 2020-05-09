@@ -91,8 +91,6 @@ inline void Debug(int d)
    digitalWrite(DEBUG_PIN2, d % 2);
 }
 
-volatile int val=-1;
-
 extern volatile uint32_t _ulTickCount;
 unsigned long my_micros( void )
 {
@@ -115,23 +113,15 @@ void what_was_loop()
   {
     Debug(0);
 
-    val=-1;
-    while(val!=0)
-    {
-       val=digitalRead(DMX_RX_PIN);  
-       if( val!=0 )
-         yield();   
-    }
+    while(digitalRead(DMX_RX_PIN)!=0)
+      yield();   
     noInterrupts();
     int t0 = my_micros();
     interrupts();
     yield();
-    while(val!=1)
-    {
-       val=digitalRead(DMX_RX_PIN);  
-       if( val!=1 )
-         yield();
-    }    
+    while(digitalRead(DMX_RX_PIN)!=1)
+      yield();
+  
     noInterrupts();
     int t1 = my_micros();
     interrupts();
