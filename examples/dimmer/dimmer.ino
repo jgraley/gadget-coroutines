@@ -138,20 +138,25 @@ void what_was_loop()
   frame_error = false;
 
   Debug(3);  
-  uint8_t dmx_frame[513];
 
-  // Wait for the SERCOM ISR to fill the buffer
+  uint8_t start_code = read_byte_from_uart();
+  if( frame_error )
+    goto DMX_ERROR_SKIP_FRAME;
+  if( start_code != 0 )
+    goto DMX_ERROR_SKIP_FRAME;
+  
+  uint8_t dmx_frame[512];
+
   for( int i=0; i<(int)sizeof(dmx_frame); i++ )
   {
+    yield();
     dmx_frame[i] = read_byte_from_uart();
     if( frame_error )
-      break;
-    if( i+1<(int)sizeof(dmx_frame))
-      yield();    // yield if will iterate again (i.e. need another byte)
+      goto DMX_ERROR_SKIP_FRAME;
   }
 
+DMX_ERROR_SKIP_FRAME:
   Debug(frame_error?2:3);      
-
   dmx_uart_shutdown();
   // "Hop" back to foreground
   Coroutine::yield([](){ enable_fg=true; });   
@@ -159,10 +164,10 @@ void what_was_loop()
   if( frame_error )
     return;
 
-  if( dmx_frame[0] != 0 )
+  if( start_code != 0 )
     return; // not regular DMX
 
-  auto *c = dmx_frame+1;
+  auto *c = dmx_frame;
   
   //TRACE("%dus: %d %d %d %d %d %d", len, c[0], c[1], c[2], c[3], c[4], c[5] );
   if( c[3] >= 128 )
