@@ -16,7 +16,6 @@ Adafruit_DotStar strip = Adafruit_DotStar(
 #define DMX_BAUDRATE 250000
 
 volatile unsigned char dmx_frame[513];
-volatile int dmx_frame_index=0;
 volatile bool enable_fg = true;
 
 SERCOM *dmx_sercom = &sercom0;
@@ -61,7 +60,7 @@ void handle_UART_error()
   dmx_sercom->clearStatusUART();
 }
 
-void read_byte_from_uart()
+uint8_t read_byte_from_uart()
 {
   if (dmx_sercom->isUARTError()) {
     
@@ -69,10 +68,9 @@ void read_byte_from_uart()
   }
 
   if (dmx_sercom->availableDataUART()) {
-    unsigned char b = dmx_sercom->readDataUART();
-    if( dmx_frame_index < (int)sizeof(dmx_frame) )
-      dmx_frame[dmx_frame_index++] = b;
+    return dmx_sercom->readDataUART();
   }
+  return 0;
 }
 
 
@@ -143,10 +141,12 @@ void what_was_loop()
   Debug(3);  
 
   // Wait for the SERCOM ISR to fill the buffer
-  for( dmx_frame_index=0; dmx_frame_index<(int)sizeof(dmx_frame) && !frame_error; )
+  for( int i=0; i<(int)sizeof(dmx_frame); i++ )
   {
-    read_byte_from_uart();
-    if( dmx_frame_index<(int)sizeof(dmx_frame) && !frame_error)
+    dmx_frame[i] = read_byte_from_uart();
+    if( frame_error )
+      break;
+    if( i+1<(int)sizeof(dmx_frame))
       yield();    // yield if will iterate again (i.e. need another byte)
   }
 
