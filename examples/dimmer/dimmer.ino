@@ -47,24 +47,28 @@ void dmx_uart_claim_pins()
   pinPeripheral(PIN_SERIAL1_TX, g_APinDescription[PIN_SERIAL1_TX].ulPinType);
 }
 
+volatile bool frame_error = false;
+
 void handle_UART_error()
 {
+  dmx_sercom->acknowledgeUARTError();
   if (dmx_sercom->isFrameErrorUART()) {
     // frame error, next byte is invalid so read and discard it
     dmx_sercom->readDataUART();
+    frame_error = true;
 
     dmx_sercom->clearFrameErrorUART();
   }  
   // TODO: if (sercom->isBufferOverflowErrorUART()) ....
   // TODO: if (sercom->isParityErrorUART()) ....
+  dmx_sercom->clearStatusUART();
 }
 
 void read_byte_from_uart()
 {
   if (dmx_sercom->isUARTError()) {
-    dmx_sercom->acknowledgeUARTError();
-    handle_UART_error();
-    dmx_sercom->clearStatusUART();
+    
+    handle_UART_error();    
   }
 
   if (dmx_sercom->availableDataUART()) {
@@ -72,14 +76,6 @@ void read_byte_from_uart()
     if( dmx_frame_index < (int)sizeof(dmx_frame) )
       dmx_frame[dmx_frame_index++] = b;
   }
-
-  /*
-   if (dmx_sercom->isDataRegisterEmptyUART()) {
-      dmx_sercom->writeDataUART(data);
-    } else {
-      dmx_sercom->disableDataRegisterEmptyInterruptUART();
-    }
-  }*/
 }
 
 
@@ -113,7 +109,7 @@ void what_was_loop()
 {
   int len;
 
-  Debug(2);
+  Debug(0);
   
 #ifdef HOP_PIN_INTERRUPT
   // "Hop" on to the pin interrupt
@@ -155,7 +151,7 @@ void what_was_loop()
     Debug(1);
    
     len = t1 - t0;
-    if( len >= 88 )
+    if( len >= 72 )
     {
       break;
     }    
@@ -166,35 +162,42 @@ void what_was_loop()
   enable_fg=false; 
 #endif
   // "Hop" to UART interrupt
-  Coroutine::yield([](){ dmx_uart_claim_pins();
+  Coroutine::yield([](){ dmx_uart_shutdown();
+                         dmx_uart_claim_pins();
                          dmx_uart_init(); }); 
-#elif defined(HOP_PIN_INTERRUPT)
+#else 
+#if defined(HOP_PIN_INTERRUPT)
   // "Hop" back to foreground
   Coroutine::yield([](){ enable_fg=true; });   
-#else
+#endif
+  dmx_uart_shutdown();
   dmx_uart_claim_pins();
   dmx_uart_init();
 #endif
+  frame_error = false;
 
   Debug(3);  
 
   // Wait for the SERCOM ISR to fill the buffer
-  for( dmx_frame_index=0; dmx_frame_index<(int)sizeof(dmx_frame); )
+  for( dmx_frame_index=0; dmx_frame_index<(int)sizeof(dmx_frame) && !frame_error; )
   {
 #ifdef HOP_UART_INTERRUPT
     read_byte_from_uart();
-    if( dmx_frame_index<(int)sizeof(dmx_frame) )
+    if( dmx_frame_index<(int)sizeof(dmx_frame) && !frame_error)
       yield();    // yield if will iterate again (i.e. need another byte)
 #endif      
   }
 
-  Debug(2);      
+  Debug(frame_error?2:3);      
 
   dmx_uart_shutdown();
 #ifdef HOP_UART_INTERRUPT
   // "Hop" back to foreground
   Coroutine::yield([](){ enable_fg=true; });   
 #endif
+
+  if( frame_error )
+    return;
 
   if( dmx_frame[0] != 0 )
     return; // not regular DMX
@@ -224,6 +227,10 @@ void loop()
 {
   if( enable_fg )
     dmx_loop();
+  if( frame_error )
+  {
+    TRACE("frame error" );
+  }
 }
 
 
