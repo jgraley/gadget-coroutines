@@ -139,30 +139,57 @@ void get_frame_data()
 }
 
 
+class RAIIHopper
+{
+public:
+  RAIIHopper( std::function<void()> resume_detach_, std::function<void()> my_attach_, std::function<void()> my_detach_, std::function<void()> resume_attach_ ) :
+    my_detach( my_detach_ ),
+    resume_attach( resume_attach_ )
+  {
+    resume_detach_();
+    me()->set_hop_lambda( my_attach_ );
+  }
+
+  void hop(std::function<void()> my_attach_, std::function<void()> my_detach_)
+  {
+    my_detach();
+    me()->set_hop_lambda( my_attach_ );
+    my_detach = my_detach_;
+  }
+
+  ~RAIIHopper()
+  {
+    my_detach();
+    me()->set_hop_lambda( resume_attach );
+  }
+private: 
+  std::function<void()> my_detach;                             
+  std::function<void()> resume_attach;
+};
+
+
 void get_dmx_frame()
 {
   Debug(0);
 
   // "Hop" on to the pin interrupt
-  enable_fg=false; 
-  me()->set_hop_lambda([](){ attachInterrupt(DMX_RX_PIN, dmxLineISR, CHANGE); });
+  RAIIHopper hr ( []{ enable_fg=false; },
+                  []{ attachInterrupt(DMX_RX_PIN, dmxLineISR, CHANGE); },
+                  []{ detachInterrupt(DMX_RX_PIN); },
+                  []{ enable_fg=true; } );                             
 
   wait_for_break_pulse();
- 
+   
   // "Hop" across to UART interrupt
-  detachInterrupt(DMX_RX_PIN);
-  me()->set_hop_lambda([](){ dmx_uart_shutdown();
-                             dmx_uart_claim_pins();
-                             dmx_uart_init(); }); 
-  
-  get_frame_data();
-  
+  hr.hop( []{ dmx_uart_shutdown();
+              dmx_uart_claim_pins();
+              dmx_uart_init(); }, 
+          []{ dmx_uart_shutdown(); } ); 
+          
+  get_frame_data();   
   Debug(frame_error?2:3);      
-  
+    
   // "Hop" back to foreground
-  dmx_uart_shutdown();
-  me()->set_hop_lambda([](){ enable_fg=true; });
-  yield();
 }
 
 void output_dmx_frame()
@@ -190,6 +217,8 @@ Coroutine dmx_loop([]{
   while(1)
   {
     get_dmx_frame();
+    yield();
+
     output_dmx_frame();
     yield();
   }
