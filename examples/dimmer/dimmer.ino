@@ -97,14 +97,9 @@ unsigned long my_micros( void )
   return ((count+pend) * 1000) + (((SysTick->LOAD  - ticks)*(1048576/(VARIANT_MCK/1000000)))>>20) ;
 }
 
-void get_dmx_frame()
-{
-  Debug(0);
 
-  // "Hop" on to the pin interrupt
-  enable_fg=false; 
-  me()->set_hop_lambda([](){ attachInterrupt(DMX_RX_PIN, dmxLineISR, CHANGE); });
- 
+void wait_for_break_pulse()
+{
   int len;
   do
   {
@@ -116,38 +111,62 @@ void get_dmx_frame()
       
     len = t1 - t0;
   } while( len < 72 );
+}
+
+
+uint8_t start_code;
+uint8_t dmx_frame[512];
+
+
+void get_frame_data()
+{
+  frame_error = false;
+
+  Debug(3);  
+
+  start_code = read_byte_from_uart();
+  if( frame_error )
+    return;
+  if( start_code != 0 )
+    return;
   
+  for( int i=0; i<(int)sizeof(dmx_frame); i++ )
+  {
+    dmx_frame[i] = read_byte_from_uart();
+    if( frame_error )
+      return;
+  }
+}
+
+
+void get_dmx_frame()
+{
+  Debug(0);
+
+  // "Hop" on to the pin interrupt
+  enable_fg=false; 
+  me()->set_hop_lambda([](){ attachInterrupt(DMX_RX_PIN, dmxLineISR, CHANGE); });
+
+  wait_for_break_pulse();
+ 
   // "Hop" across to UART interrupt
   detachInterrupt(DMX_RX_PIN);
   me()->set_hop_lambda([](){ dmx_uart_shutdown();
                              dmx_uart_claim_pins();
                              dmx_uart_init(); }); 
-  frame_error = false;
-
-  Debug(3);  
-
-  uint8_t start_code = read_byte_from_uart();
-  if( frame_error )
-    goto DMX_ERROR_SKIP_FRAME;
-  if( start_code != 0 )
-    goto DMX_ERROR_SKIP_FRAME;
   
-  uint8_t dmx_frame[512];
-  for( int i=0; i<(int)sizeof(dmx_frame); i++ )
-  {
-    dmx_frame[i] = read_byte_from_uart();
-    if( frame_error )
-      goto DMX_ERROR_SKIP_FRAME;
-  }
-
-DMX_ERROR_SKIP_FRAME:
+  get_frame_data();
+  
   Debug(frame_error?2:3);      
   
   // "Hop" back to foreground
   dmx_uart_shutdown();
   me()->set_hop_lambda([](){ enable_fg=true; });
   yield();
+}
 
+void output_dmx_frame()
+{
   if( frame_error )
   {
     digitalWrite(RED_LED_PIN, HIGH);
@@ -171,6 +190,7 @@ Coroutine dmx_loop([]{
   while(1)
   {
     get_dmx_frame();
+    output_dmx_frame();
     yield();
   }
 });
