@@ -71,6 +71,16 @@ Coroutine::~Coroutine()
 }
 
 
+void Coroutine::set_hop_lambda( std::function<void()> hop )
+{
+  Task::set_hop_lambda( [=]
+  {
+    RAII_CLS raii_cls(this);
+    hop();
+  } );
+}
+
+
 pair<const byte *, const byte *> Coroutine::get_child_stack_bounds()
 {
     return make_pair(child_stack_memory, child_stack_memory+stack_size);
@@ -163,20 +173,11 @@ void Coroutine::jump_to_child()
 }
 
 
-void Coroutine::yield_nonstatic( function<void()> hop )
+void Coroutine::yield_nonstatic()
 {
   check_valid_this();
   ASSERT( child_status == RUNNING, "yield when child was not running, status %d", (int)child_status );
   
-  if( hop )
-  {
-    set_hop_lambda( [=]
-    {
-        RAII_CLS raii_cls(this);
-        hop();
-    } );
-  }
-
   int val;
   switch( val = setjmp( child_jmp_buf ) ) {                    
     case IMMEDIATE: {

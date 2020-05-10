@@ -32,11 +32,11 @@ public:
   virtual ~Task() = default;
     
   virtual void operator()();
+  inline void set_hop_lambda( std::function<void()> hop );
   
 protected:
   inline void check_valid_this() const;
   virtual void run_iteration() = 0;
-  inline void set_hop_lambda( std::function<void()> hop );
   
 private:
   const uint32_t magic;

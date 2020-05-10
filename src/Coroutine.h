@@ -30,6 +30,7 @@ public:
   inline static void yield( 
     std::function<void()> hop = std::function<void()>() );
 
+  void set_hop_lambda( std::function<void()> hop );
   std::pair<const byte *, const byte *> get_child_stack_bounds();
 
 private:
@@ -53,7 +54,7 @@ private:
   [[ noreturn ]] void child_main_function();
   void run_iteration();
   void jump_to_child();
-  void yield_nonstatic( std::function<void()> hop );
+  void yield_nonstatic();
   [[ noreturn ]] void jump_to_parent();
   
   const std::function<void()> child_function; 
@@ -79,7 +80,12 @@ void Coroutine::yield( std::function<void()> hop )
 {
   Coroutine * const me_value = me();
   if( me_value )
-    me_value->yield_nonstatic( hop );
+  {
+    if( hop )
+      me_value->set_hop_lambda(hop);
+      
+    me_value->yield_nonstatic();
+  }
 }
 
 inline Coroutine *me()
