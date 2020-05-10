@@ -29,7 +29,12 @@ void __attribute__ ((constructor)) init_baseline_cls()
 // become seemingly coroutine-aware.
 extern  "C" void __attribute__((used)) yield(void) 
 {
-  // Try not to lose TinyUSB polling
+  Coroutine::yield();
+}
+
+
+extern void system_idle_tasks()
+{
 #if defined(USE_TINYUSB)
   tud_task();
   tud_cdc_write_flush();

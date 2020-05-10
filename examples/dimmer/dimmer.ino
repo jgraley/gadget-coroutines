@@ -201,6 +201,7 @@ void loop()
   {
     TRACE("frame error" );
   }
+  system_idle_tasks();
 }
 
 

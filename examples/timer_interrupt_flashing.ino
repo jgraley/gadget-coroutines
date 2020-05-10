@@ -40,7 +40,7 @@ void setup() {
   startTimer(10);
 }
 
-void loop() {}
+void loop() { system_idle_tasks(); }
 
 void setTimerFrequency(int frequencyHz) {
   int compareValue = (CPU_HZ / (TIMER_PRESCALER_DIV * frequencyHz)) - 1;

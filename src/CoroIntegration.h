@@ -9,6 +9,8 @@
 #ifndef CoroIntegration_h
 #define CoroIntegration_h
 
+extern void system_idle_tasks();
+
 extern void bring_in_CoroIntegration();
 
 #endif
