@@ -61,15 +61,16 @@ void handle_UART_error()
 
 uint8_t read_byte_from_uart()
 {
-  if (dmx_sercom->isUARTError()) {
-    
-    handle_UART_error();    
-  }
+  do yield();
+  while( !(dmx_sercom->isUARTError() || dmx_sercom->availableDataUART()));
 
-  if (dmx_sercom->availableDataUART()) {
-    return dmx_sercom->readDataUART();
+  if(dmx_sercom->isUARTError())
+  {
+    handle_UART_error();  
+    return 0;
   }
-  return 0;
+  
+  return dmx_sercom->readDataUART();
 }
 
 
@@ -103,29 +104,18 @@ void what_was_loop()
 
   Debug(0);
 
-  bool first = true;
+  // "Hop" on to the pin interrupt
+  enable_fg=false; 
+  me()->set_hop_lambda([](){ attachInterrupt(DMX_RX_PIN, dmxLineISR, CHANGE); });
   do
   {
-    if( first )
-    {
-      // "Hop" on to the pin interrupt
-      enable_fg=false; 
-      me()->set_hop_lambda([](){ attachInterrupt(DMX_RX_PIN, dmxLineISR, CHANGE); });
-      yield();       
-    }
-    else
-    {
-      yield();
-    }
-
-    while(digitalRead(DMX_RX_PIN)!=0)
-      yield();   
+    do yield(); 
+    while(digitalRead(DMX_RX_PIN)!=0);
 
     int t0 = my_micros();
-    yield();
     
-    while(digitalRead(DMX_RX_PIN)!=1)
-      yield();
+    do yield(); 
+    while(digitalRead(DMX_RX_PIN)!=1);
   
     int t1 = my_micros();
       
@@ -138,7 +128,6 @@ void what_was_loop()
   me()->set_hop_lambda([](){ dmx_uart_shutdown();
                              dmx_uart_claim_pins();
                              dmx_uart_init(); }); 
-  yield();
   frame_error = false;
 
   Debug(3);  
@@ -153,7 +142,6 @@ void what_was_loop()
 
   for( int i=0; i<(int)sizeof(dmx_frame); i++ )
   {
-    yield();
     dmx_frame[i] = read_byte_from_uart();
     if( frame_error )
       goto DMX_ERROR_SKIP_FRAME;
@@ -167,7 +155,10 @@ DMX_ERROR_SKIP_FRAME:
   yield();
 
   if( frame_error )
+  {
+    digitalWrite(RED_LED_PIN, HIGH);
     return;
+  }
 
   if( start_code != 0 )
     return; // not regular DMX
