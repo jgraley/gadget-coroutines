@@ -25,7 +25,8 @@ Coroutine led_flasher([]()
   
       // "Hop" on to the interrupt
       enable_fg=false; 
-      Coroutine::yield([](){ NVIC_EnableIRQ(TC3_IRQn); }); 
+      me()->set_hop_lambda([](){ NVIC_EnableIRQ(TC3_IRQn); });
+      yield(); 
       TC->INTFLAG.bit.MC0 = 1;
   
       digitalWrite(LED_PIN, false);
@@ -40,7 +41,8 @@ Coroutine led_flasher([]()
   
       // "Hop" back to foreground
       NVIC_DisableIRQ(TC3_IRQn);
-      Coroutine::yield([](){ enable_fg=true; }); 
+      me()->set_hop_lambda([](){ enable_fg=true; }); 
+      yield(); 
   
       digitalWrite(LED_PIN, false);
   

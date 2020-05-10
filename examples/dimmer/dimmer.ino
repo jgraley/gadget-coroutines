@@ -110,7 +110,8 @@ void what_was_loop()
     {
       // "Hop" on to the pin interrupt
       enable_fg=false; 
-      Coroutine::yield([](){ attachInterrupt(DMX_RX_PIN, dmxLineISR, CHANGE); });       
+      me()->set_hop_lambda([](){ attachInterrupt(DMX_RX_PIN, dmxLineISR, CHANGE); });
+      yield();       
     }
     else
     {
@@ -134,9 +135,10 @@ void what_was_loop()
   
   detachInterrupt(DMX_RX_PIN);
   // "Hop" to UART interrupt
-  Coroutine::yield([](){ dmx_uart_shutdown();
-                         dmx_uart_claim_pins();
-                         dmx_uart_init(); }); 
+  me()->set_hop_lambda([](){ dmx_uart_shutdown();
+                             dmx_uart_claim_pins();
+                             dmx_uart_init(); }); 
+  yield();
   frame_error = false;
 
   Debug(3);  
@@ -161,7 +163,8 @@ DMX_ERROR_SKIP_FRAME:
   Debug(frame_error?2:3);      
   dmx_uart_shutdown();
   // "Hop" back to foreground
-  Coroutine::yield([](){ enable_fg=true; });   
+  me()->set_hop_lambda([](){ enable_fg=true; });
+  yield();
 
   if( frame_error )
     return;
