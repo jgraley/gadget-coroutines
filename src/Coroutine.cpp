@@ -71,6 +71,16 @@ Coroutine::~Coroutine()
 }
 
 
+void Coroutine::wait( std::function<bool()> test )
+{
+    do
+    {
+        yield();
+    }
+    while( test()==false );
+}
+
+
 void Coroutine::set_hop_lambda( std::function<void()> hop )
 {
   Task::set_hop_lambda( [=]

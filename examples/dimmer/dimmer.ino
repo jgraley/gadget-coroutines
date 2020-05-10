@@ -61,8 +61,7 @@ void handle_UART_error()
 
 uint8_t read_byte_from_uart()
 {
-  do yield();
-  while( !(dmx_sercom->isUARTError() || dmx_sercom->availableDataUART()));
+  Coroutine::wait( []{ return dmx_sercom->isUARTError() || dmx_sercom->availableDataUART(); } );
 
   if(dmx_sercom->isUARTError())
   {
@@ -98,33 +97,28 @@ unsigned long my_micros( void )
   return ((count+pend) * 1000) + (((SysTick->LOAD  - ticks)*(1048576/(VARIANT_MCK/1000000)))>>20) ;
 }
 
-void what_was_loop()
+void get_dmx_frame()
 {
-  int len;
-
   Debug(0);
 
   // "Hop" on to the pin interrupt
   enable_fg=false; 
   me()->set_hop_lambda([](){ attachInterrupt(DMX_RX_PIN, dmxLineISR, CHANGE); });
+ 
+  int len;
   do
   {
-    do yield(); 
-    while(digitalRead(DMX_RX_PIN)!=0);
-
+    Coroutine::wait( []{ return digitalRead(DMX_RX_PIN)==0; } );
     int t0 = my_micros();
     
-    do yield(); 
-    while(digitalRead(DMX_RX_PIN)!=1);
-  
+    Coroutine::wait( []{ return digitalRead(DMX_RX_PIN)==1; } );
     int t1 = my_micros();
       
     len = t1 - t0;
-
   } while( len < 72 );
   
+  // "Hop" across to UART interrupt
   detachInterrupt(DMX_RX_PIN);
-  // "Hop" to UART interrupt
   me()->set_hop_lambda([](){ dmx_uart_shutdown();
                              dmx_uart_claim_pins();
                              dmx_uart_init(); }); 
@@ -139,7 +133,6 @@ void what_was_loop()
     goto DMX_ERROR_SKIP_FRAME;
   
   uint8_t dmx_frame[512];
-
   for( int i=0; i<(int)sizeof(dmx_frame); i++ )
   {
     dmx_frame[i] = read_byte_from_uart();
@@ -149,8 +142,9 @@ void what_was_loop()
 
 DMX_ERROR_SKIP_FRAME:
   Debug(frame_error?2:3);      
-  dmx_uart_shutdown();
+  
   // "Hop" back to foreground
+  dmx_uart_shutdown();
   me()->set_hop_lambda([](){ enable_fg=true; });
   yield();
 
@@ -162,15 +156,13 @@ DMX_ERROR_SKIP_FRAME:
 
   if( start_code != 0 )
     return; // not regular DMX
-
-  auto *c = dmx_frame;
-  
-  //TRACE("%dus: %d %d %d %d %d %d", len, c[0], c[1], c[2], c[3], c[4], c[5] );
-  if( c[3] >= 128 )
+ 
+  //TRACE("%dus: %d %d %d %d %d %d", len, dmx_frame[0], dmx_frame[1], dmx_frame[2], dmx_frame[3], dmx_frame[4], dmx_frame[5] );
+  if( dmx_frame[3] >= 128 )
       digitalWrite(RED_LED_PIN, HIGH);
   else 
       digitalWrite(RED_LED_PIN, LOW);
-  strip.setPixelColor(0, (c[0]<<16) + (c[1]<<8) + c[2]);
+  strip.setPixelColor(0, (dmx_frame[0]<<16) + (dmx_frame[1]<<8) + dmx_frame[2]);
   strip.show();
 }
 
@@ -178,7 +170,7 @@ DMX_ERROR_SKIP_FRAME:
 Coroutine dmx_loop([]{
   while(1)
   {
-    what_was_loop();
+    get_dmx_frame();
     yield();
   }
 });

@@ -30,6 +30,7 @@ public:
   inline static Coroutine *me();
   inline static void yield();
 
+  static void wait( std::function<bool()> test );
   void set_hop_lambda( std::function<void()> hop );
   std::pair<const byte *, const byte *> get_child_stack_bounds();
 
