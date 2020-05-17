@@ -10,16 +10,22 @@
 Adafruit_DotStar strip = Adafruit_DotStar(
   DOTSTAR_NUMPIXELS, DOTSTAR_DATAPIN, DOTSTAR_CLOCKPIN, DOTSTAR_BGR);
 
+__thread int tls_var;
+int global_var;
+
   
 Coroutine led_flasher([]()
 {
+  int  local_var;
   while(1)
   {
+    //TRACE("tls_var LED flasher %p global %p local %p", &tls_var, &global_var, &local_var);
     digitalWrite(13, HIGH);   // turn the LED on (HIGH is the voltage level)
     delay(500);               // wait for a second
     digitalWrite(13, LOW);    // turn the LED off by making the voltage LOW
     delay(500);               // wait for a second
-    Serial.println("        Tock!!");
+    Serial.println(tls_var);
+    tls_var += 3;
   }
 }); 
 
@@ -34,11 +40,10 @@ Coroutine dotstar_flasher([]()
     strip.setPixelColor(0, 0); // off
     strip.show();
     delay(290);               // wait for a second
-    Serial.println("                Tack!!");
+    Serial.println(tls_var);
+    tls_var += 10;    
   }
 }); 
-
-
 
 
 // the setup function runs once when you press reset or power the board
@@ -50,10 +55,14 @@ void setup() {
 
 }
 
+
 // the loop function runs over and over again forever
 void loop() {
+  int local_var;
   delay(154);
-  Serial.println("Tick!!");
+  Serial.println(tls_var);
+  tls_var += 7;
+  //TRACE("tls_var outside %p global %p local %p", &tls_var, &global_var, &local_var);
   led_flasher();
   dotstar_flasher();
   system_idle_tasks();

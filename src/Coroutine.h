@@ -50,6 +50,20 @@ private:
     PARENT_TO_CHILD_STARTING = 3
   };
 
+  // from libgcc/emutls.c
+  typedef unsigned int word __attribute__((mode(word)));
+  typedef unsigned int pointer __attribute__((mode(pointer)));
+  struct __emutls_object
+  {
+    word size;
+    word align;
+    union {
+      pointer offset;
+      void *ptr;
+    } loc;
+    void *templ;
+  };
+
   byte *prepare_child_stack( byte *frame_end, byte *stack_pointer );
   void prepare_child_jmp_buf( jmp_buf &child_jmp_buf, const jmp_buf &initial_jmp_buf, byte *parent_stack_pointer, byte *child_stack_pointer );
   [[ noreturn ]] void child_main_function();
@@ -57,6 +71,7 @@ private:
   void jump_to_child();
   void yield_nonstatic();
   [[ noreturn ]] void jump_to_parent();
+  static void *tls_get_address(void *obj) asm ("__emutls_get_address");
   
   const std::function<void()> child_function; 
   const int stack_size;
@@ -64,6 +79,9 @@ private:
   ChildStatus child_status;
   jmp_buf parent_jmp_buf;
   jmp_buf child_jmp_buf;
+    
+  static int tls_top;
+  static byte *tls_outside_heap;
     
   static const int default_stack_size = 4096;
 };

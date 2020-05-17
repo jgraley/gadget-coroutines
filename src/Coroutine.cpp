@@ -26,7 +26,7 @@ Coroutine::Coroutine( function<void()> child_function_ ) :
   child_function( child_function_ ),
   stack_size( default_stack_size ),
   child_stack_memory( new byte[stack_size] ),
-  child_status(READY)
+  child_status( READY )
 {    
   ASSERT(child_function, "NULL child function was supplied");
   jmp_buf initial_jmp_buf;
@@ -210,3 +210,38 @@ void Coroutine::jump_to_parent()
 }
 
 
+extern void *__HeapLimit;
+void *Coroutine::tls_get_address(void *obj)
+{
+    __emutls_object * const euo = (__emutls_object *)obj;   
+    const Coroutine *me = ::me();
+    if( euo->loc.offset==0 )
+    {
+      // The first time a TLS item is accessed, regardless of context, we
+      // give it an offset.  
+      if( tls_top==0 )
+        tls_top++; // If we put 0 into euo.loc.offset, it will be indistinguishable from nullptr
+      euo->loc.offset = (tls_top + euo->align - 1) & ~(euo->align - 1);
+      tls_top = euo->loc.offset + euo->size;
+    }
+    
+    byte *tls_heap;
+    if( me )
+    {
+      // TLS data accessed in a coroutine  
+      tls_heap = me->child_stack_memory;
+    }
+    else
+    {
+      // TLS data accessed outside of any coroutine
+      // The first time this happens, we'll have to allocate a block of memory
+      if( !tls_outside_heap )
+        tls_outside_heap = (byte *)calloc(default_stack_size, 1);
+      tls_heap = tls_outside_heap;
+    }
+    return tls_heap + euo->loc.offset;
+}
+
+
+int Coroutine::tls_top = 0;
+byte *Coroutine::tls_outside_heap = 0;
