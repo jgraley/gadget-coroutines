@@ -162,10 +162,10 @@ void get_frame_data()
                          dmx_uart_init(); }, 
                      []{ dmx_uart_shutdown(); },
                      []{ enable_fg=true; } ); 
-  frame_error = false;
 
   Debug(3);  
 
+  frame_error = false;
   start_code = read_byte_from_uart();
   if( frame_error )
     return;
