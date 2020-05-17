@@ -110,7 +110,7 @@ void loop()
   {
     led_flasher();
   }
-  int n = random(30000, 1000000);
+  int n = random(3000, 100000);
   for(volatile int i=0; i<n; i++ )
   {
       system_idle_tasks();
