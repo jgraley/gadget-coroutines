@@ -7,8 +7,8 @@
 #include "Coroutine.h"
 
 #include "Coroutine_arm.h"
-#include "CoroTracing.h"
-#include "CoroIntegration.h"
+#include "Tracing.h"
+#include "Integration.h"
 #include "RAII_CLS.h"
 
 #include <cstring>
@@ -67,7 +67,7 @@ Coroutine::~Coroutine()
   check_valid_this();
   ASSERT( child_status == COMPLETE, "destruct when child was not complete, status %d", (int)child_status );
   delete[] child_stack_memory;
-  bring_in_CoroIntegration();
+  bring_in_Integration();
 }
 
 

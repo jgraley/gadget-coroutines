@@ -6,8 +6,8 @@
  * Tracing macros
  */
 
-#ifndef CoroTracing_h
-#define CoroTracing_h
+#ifndef Tracing_h
+#define Tracing_h
 
 #include <cstring>
 #include <functional>

@@ -14,7 +14,7 @@
 
 #include "Coroutine_arm.h"
 #include "Task.h"
-#include "CoroIntegration.h"
+#include "Integration.h"
 
 #include <functional>
 #include <csetjmp> 

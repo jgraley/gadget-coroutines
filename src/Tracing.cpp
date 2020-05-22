@@ -1,10 +1,10 @@
 /**
- * Coroutines.h - Coroutines for Gadgets.
+ * Tracing.h - Coroutines for Gadgets.
  * Created by John Graley, 2020.
  * (C) John Graley LGPL license applies.
  */
 
-#include "CoroTracing.h"
+#include "Tracing.h"
 
 #include "Coroutine_arm.h"
 

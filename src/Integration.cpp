@@ -1,5 +1,5 @@
 /**
- * CoroIntegration.cpp - Coroutines for Gadgets.
+ * Integration.cpp - Coroutines for Gadgets.
  * Created by John Graley, 2020.
  * (C) John Graley LGPL license applies.
  * 
@@ -44,6 +44,6 @@ extern void system_idle_tasks()
 }
 
 
-void bring_in_CoroIntegration()
+void bring_in_Integration()
 {
 }
