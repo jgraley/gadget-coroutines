@@ -20,6 +20,14 @@ volatile bool enable_fg = true;
 SERCOM *dmx_sercom = &sercom0;
 // Note: we are coding direct to the SERCOM API since we want to implement the ISR ourselves
 
+void (*SERCOM0_Handler_ptr)();
+
+void SERCOM0_Handler()  
+{
+  if( SERCOM0_Handler_ptr )
+    SERCOM0_Handler_ptr();
+}
+
 void dmx_uart_init()
 {
   // PIN_SERIAL1_RX, PIN_SERIAL1_TX, PAD_SERIAL1_RX, PAD_SERIAL1_TX, NO_RTS_PIN, NO_CTS_PIN
@@ -127,11 +135,34 @@ private:
 };
 
 
+void output_dmx_frame();
+void get_dmx_frame();
+uint8_t start_code;
+uint8_t dmx_frame[512];
+Coroutine dmx_loop([]{
+  while(1)
+  {
+    get_dmx_frame();
+    yield();
+
+    if( frame_error )
+    {
+      digitalWrite(RED_LED_PIN, HIGH);
+      continue;
+    }
+  
+    if( start_code == 0 )
+      output_dmx_frame();
+      
+    yield();
+  }
+});
+
 void wait_for_break_pulse()
 {
   // "Hop" on to the pin interrupt
   RAIIHopper hopper( []{ enable_fg=false; },
-                     []{ attachInterrupt(DMX_RX_PIN, dmxLineISR, CHANGE); },
+                     []{ attachInterrupt(DMX_RX_PIN, dmx_loop, CHANGE); },
                      []{ detachInterrupt(DMX_RX_PIN); },
                      []{ enable_fg=true; } );                             
 
@@ -149,18 +180,16 @@ void wait_for_break_pulse()
 }
 
 
-uint8_t start_code;
-uint8_t dmx_frame[512];
-
-
 void get_frame_data()
 {
   // "Hop" across to UART interrupt
   RAIIHopper hopper( []{ enable_fg=false; },
                      []{ dmx_uart_shutdown();
                          dmx_uart_claim_pins();
-                         dmx_uart_init(); }, 
-                     []{ dmx_uart_shutdown(); },
+                         dmx_uart_init();
+                         SERCOM0_Handler_ptr=dmx_loop;}, 
+                     []{ dmx_uart_shutdown();
+                         SERCOM0_Handler_ptr=nullptr;},
                      []{ enable_fg=true; } ); 
 
   Debug(3);  
@@ -185,6 +214,7 @@ void get_dmx_frame()
 {
   Debug(0);
 
+  //strange();
   wait_for_break_pulse();             
   get_frame_data();   
   
@@ -203,46 +233,16 @@ void output_dmx_frame()
   strip.show();
 }
 
-
-Coroutine dmx_loop([]{
-  while(1)
-  {
-    get_dmx_frame();
-    yield();
-
-    if( frame_error )
-    {
-      digitalWrite(RED_LED_PIN, HIGH);
-      continue;
-    }
-  
-    if( start_code == 0 )
-      output_dmx_frame();
-      
-    yield();
-  }
-});
-
-
 void loop()
 {
   if( enable_fg )
-    dmx_loop();
+  {
+    //dmx_loop();
+    ((void(*)())dmx_loop)(); // invoke via Super Functor
+  }
   if( frame_error )
   {
     TRACE("frame error" );
   }
   system_idle_tasks();
-}
-
-
-void dmxLineISR()
-{
-  dmx_loop();
-}
-
-
-void SERCOM0_Handler()  
-{
-  dmx_loop();
 }

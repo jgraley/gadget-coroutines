@@ -5,12 +5,12 @@
 
 using namespace std;
 
-SuperFunctor::SuperFunctor() :
-   entrypoint_fpt( UnpackMemberFunctionPointer( &SuperFunctor::operator() ) ) 
+SuperFunctor::SuperFunctor()
 {
     const pair<ThumbInstruction *, int> assembly = GetAssembly();
-    ASSERT( assembly.second <= MAX_INSTRUCTIONS, "Thunk assmebly too long" );
+    ASSERT( assembly.second <= MAX_INSTRUCTIONS, "Thunk assemebly too long" );
     memcpy( entrypoint_thunk, assembly.first, assembly.second * sizeof(ThumbInstruction) );     
+    //TRACE("thunk at %p %x %x %x %x", entrypoint_thunk, entrypoint_thunk[0], entrypoint_thunk[1], entrypoint_thunk[2], entrypoint_thunk[3]);
 }
 
 
@@ -19,30 +19,36 @@ SuperFunctor::~SuperFunctor()
 }
 
 
-SuperFunctor::EntryPointFP SuperFunctor::GetEntryPoint()
+SuperFunctor::operator EntryPointFP()
 {
-    auto ep_word = (uint32_t )entrypoint_thunk;
-    ep_word |= 1; // set the "thumb" bit
-    return (EntryPointFP)ep_word;
-}
-
-
-void SuperFunctor::operator()()
-{
-    // We end up here on the first superfunctor invocation because our
-    // constructor used the SuperFunctor vtable when unpacking: bootstrap
-    // into the correct vtable by unpacking again.
+    // First fill in the FPT (Function Pointer with This arg) using 
+    // hand-written version of the vcall algorithm. We do it here
+    // because the object is not fully formed during our constructor.
     EntryPointMFP mfp = &SuperFunctor::operator();
-    EntryPointFPT new_fpt = UnpackMemberFunctionPointer( mfp ); 
     
-    // If someone invoked operator() on a SuperFunctor instance, don't 
-    // recurse infinitely!
-    if( new_fpt == entrypoint_fpt )
-        return; 
-    entrypoint_fpt = new_fpt;
-        
-    // Invoke the function. We'd like a tail call here, due to re-entrancy.
-    entrypoint_fpt(this);
+    // alias an array of words over the member function pointer
+    typedef array<uint32_t, sizeof(EntryPointMFP)/sizeof(uint32_t)> MFPWords;
+    MFPWords &mfp_words = *(MFPWords *)&mfp;
+    ASSERT( mfp_words.size() == 2, "Unexpected size of member function pointer"); 
+    
+    auto this_words = (uint32_t *)this;
+    
+    if( mfp_words[1] & 1 )
+    {
+        int this_offset_bytes = mfp_words[1] >> 1;
+        auto vtable = (EntryPointFPT *)(this_words[this_offset_bytes>>2]);
+        int vtable_offset_bytes = mfp_words[0];
+        entrypoint_fpt = vtable[vtable_offset_bytes>>2];
+    }
+    else
+    {
+        entrypoint_fpt = (EntryPointFPT)(mfp_words[0]);        
+    }        
+    
+    // Convert the address of the think to a function pointer
+    auto ep_word = (uint32_t)entrypoint_thunk;
+    ep_word |= 1; // set the "thumb" bit to make a function pointer
+    return (EntryPointFP)ep_word;
 }
 
 
@@ -68,31 +74,6 @@ pair<SuperFunctor::ThumbInstruction *, int> SuperFunctor::GetAssembly()
     auto end = (ThumbInstruction *)(&&END);
     
     return make_pair( begin, end-begin );
-}
-
-
-SuperFunctor::EntryPointFPT SuperFunctor::UnpackMemberFunctionPointer( EntryPointMFP mfp )
-{
-    // alias an array of words over the member function pointer
-    typedef array<uint32_t, sizeof(EntryPointMFP)/sizeof(uint32_t)> MFPWords;
-    MFPWords &mfp_words = *(MFPWords *)&mfp;
-    ASSERT( mfp_words.size() == 2, "Unexpected size of member function pointer"); 
-    
-    auto this_words = (uint32_t *)this;
-    
-    EntryPointFPT fpt;
-    if( mfp_words[1] & 1 )
-    {
-        int this_offset_bytes = mfp_words[1] >> 1;
-        auto vtable = (EntryPointFPT *)(this_words[this_offset_bytes>>2]);
-        int vtable_offset_bytes = mfp_words[0];
-        fpt = vtable[vtable_offset_bytes>>2];
-    }
-    else
-    {
-        fpt = (EntryPointFPT)(mfp_words[0]);        
-    }        
-    return fpt;
 }
 
 

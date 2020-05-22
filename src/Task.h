@@ -14,18 +14,11 @@
 
 
 #include "CoroTracing.h"
-
-#ifdef ENABLE_SUPERFUNCTOR
-// Super Functors work, but only really useful if the vector table is in RAM
 #include "SuperFunctor.h"
-#endif
 
 #include <functional>
 
-class Task 
-#ifdef ENABLE_SUPERFUNCTOR
-    : public SuperFunctor
-#endif
+class Task : public SuperFunctor
 {
 public:
   Task();
