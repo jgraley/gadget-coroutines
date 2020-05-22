@@ -83,7 +83,7 @@ private:
   static int tls_top;
   static byte *tls_outside_heap;
     
-  static const int default_stack_size = 4096;
+  static const int default_stack_size = 1024;
 };
 
 ///-- 
