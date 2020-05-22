@@ -162,7 +162,7 @@ void wait_for_break_pulse()
 {
   // "Hop" on to the pin interrupt
   RAIIHopper hopper( []{ enable_fg=false; },
-                     []{ attachInterrupt(DMX_RX_PIN, dmx_loop, CHANGE); },
+                     []{ attachInterrupt(DMX_RX_PIN, *me(), CHANGE); },
                      []{ detachInterrupt(DMX_RX_PIN); },
                      []{ enable_fg=true; } );                             
 
@@ -187,9 +187,9 @@ void get_frame_data()
                      []{ dmx_uart_shutdown();
                          dmx_uart_claim_pins();
                          dmx_uart_init();
-                         SERCOM0_Handler_ptr=dmx_loop;}, 
+                         SERCOM0_Handler_ptr = *me();}, 
                      []{ dmx_uart_shutdown();
-                         SERCOM0_Handler_ptr=nullptr;},
+                         SERCOM0_Handler_ptr = nullptr;},
                      []{ enable_fg=true; } ); 
 
   Debug(3);  
@@ -237,8 +237,7 @@ void loop()
 {
   if( enable_fg )
   {
-    //dmx_loop();
-    ((void(*)())dmx_loop)(); // invoke via Super Functor
+    dmx_loop();
   }
   if( frame_error )
   {
