@@ -11,6 +11,7 @@ SuperFunctor::SuperFunctor() :
     const pair<MachineInstruction *, int> assembly = GetAssembly();
     ASSERT( assembly.second <= SUPER_FUNCTOR_THUNK_ASSEMBLY_SIZE, "Thunk assemebly too long" );
     memcpy( entrypoint_thunk, assembly.first, assembly.second * sizeof(MachineInstruction) );     
+    __builtin___clear_cache(entrypoint_thunk, entrypoint_thunk+sizeof(entrypoint_thunk)); // We've written some code into memory
     //TRACE("thunk at %p %x %x %x %x", entrypoint_thunk, entrypoint_thunk[0], entrypoint_thunk[1], entrypoint_thunk[2], entrypoint_thunk[3]);
 }
 
