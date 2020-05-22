@@ -5,13 +5,13 @@
 #include <cstddef>
 #include <cstdint>
 
-#define MAX_INSTRUCTIONS 4
+#include "SuperFunctor_arm.h"
 
 class SuperFunctor
 {
 public:
   SuperFunctor();
-  virtual ~SuperFunctor();
+  virtual ~SuperFunctor() = default;
   typedef void (*EntryPointFP)();
   operator EntryPointFP();
 
@@ -21,11 +21,10 @@ protected:
 private:
   typedef void (SuperFunctor::* EntryPointMFP)();
   typedef void (*EntryPointFPT)( SuperFunctor *this_ );
-  typedef uint16_t ThumbInstruction;
     
-  static std::pair<ThumbInstruction *, int> GetAssembly();
+  static std::pair<MachineInstruction *, int> GetAssembly();
 
-  ThumbInstruction entrypoint_thunk[MAX_INSTRUCTIONS];
+  MachineInstruction entrypoint_thunk[SUPER_FUNCTOR_THUNK_ASSEMBLY_SIZE];
   EntryPointFPT entrypoint_fpt; 
 
 #ifdef SUPERFUNCTOR_TESTS  
