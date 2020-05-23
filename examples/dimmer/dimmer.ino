@@ -7,8 +7,8 @@
 // so we can still get serived promptly when in foreground. Therefore, dimming remains smooth.
 //#define SSD1306_EXAMPLE_AS_SUBPROGRAM
 
-
 #include "Coroutine.h"
+#include "Hopper.h"
 #include <Adafruit_DotStar.h>
 #include "wiring_private.h"
 
@@ -115,33 +115,6 @@ unsigned long my_micros( void )
 }
 
 
-class RAIIHopper
-{
-public:
-  RAIIHopper( std::function<void()> ext_detach_, std::function<void()> my_attach_, std::function<void()> my_detach_, std::function<void()> ext_attach_ ) :
-    my_detach( my_detach_ ),
-    ext_attach( ext_attach_ )
-  {
-    ext_detach_();
-    me()->set_hop_lambda( my_attach_ );
-  }
-
-  void hop(std::function<void()> my_attach_, std::function<void()> my_detach_)
-  {
-    my_detach();
-    me()->set_hop_lambda( my_attach_ );
-    my_detach = my_detach_;
-  }
-
-  ~RAIIHopper()
-  {
-    my_detach();
-    me()->set_hop_lambda( ext_attach );
-  }
-private: 
-  std::function<void()> my_detach;                             
-  std::function<void()> ext_attach;
-};
 
 void output_dmx_frame();
 void get_dmx_frame();
@@ -202,10 +175,10 @@ Coroutine dmx_loop([]
 void wait_for_break_pulse()
 {
   // "Hop" on to the pin interrupt
-  RAIIHopper hopper( []{ enable_fg=false; },
-                     []{ attachInterrupt(DMX_RX_PIN, *me(), CHANGE); },
-                     []{ detachInterrupt(DMX_RX_PIN); },
-                     []{ enable_fg=true; } );                             
+  Hopper hopper( []{ enable_fg=false; },
+                 []{ attachInterrupt(DMX_RX_PIN, *me(), CHANGE); },
+                 []{ detachInterrupt(DMX_RX_PIN); },
+                 []{ enable_fg=true; } );                             
 
   int len;
   do
@@ -224,14 +197,14 @@ void wait_for_break_pulse()
 void get_frame_data()
 {
   // "Hop" across to UART interrupt
-  RAIIHopper hopper( []{ enable_fg=false; },
-                     []{ dmx_uart_shutdown();
-                         dmx_uart_claim_pins();
-                         dmx_uart_init();
-                         Attach_SERCOM0_Handler(*me());}, 
-                     []{ dmx_uart_shutdown();
-                         Detach_SERCOM0_Handler();},
-                     []{ enable_fg=true; } ); 
+  Hopper hopper( []{ enable_fg=false; },
+                 []{ dmx_uart_shutdown();
+                     dmx_uart_claim_pins();
+                     dmx_uart_init();
+                     Attach_SERCOM0_Handler(*me());}, 
+                 []{ dmx_uart_shutdown();
+                     Detach_SERCOM0_Handler();},
+                 []{ enable_fg=true; } ); 
 
   frame_error = false;
   start_code = read_byte_from_uart();
