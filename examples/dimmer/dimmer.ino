@@ -1,14 +1,41 @@
+#define OLED
+#define DOTSTAR
+
+// With no functional changes, I was able to get the example program from the SSD1306 
+// display libaray to run in a coroutine very easily. The example program, ssd1306_128x32_i2c.ino
+// contains long delays of a second or two via the `delay()` function. However, `delay()` yields
+// so we can still get serived promptly when in foreground. Therefore, dimming remains smooth.
+//#define SSD1306_EXAMPLE_AS_SUBPROGRAM
+
+
 #include "Coroutine.h"
 #include <Adafruit_DotStar.h>
 #include "wiring_private.h"
 
+#ifdef OLED
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+#endif
+
+#ifdef DOTSTAR
 #define DOTSTAR_NUMPIXELS 1 
 #define DOTSTAR_DATAPIN   7
 #define DOTSTAR_CLOCKPIN  8
 
-Adafruit_DotStar strip = Adafruit_DotStar(
-  DOTSTAR_NUMPIXELS, DOTSTAR_DATAPIN, DOTSTAR_CLOCKPIN, DOTSTAR_BGR);
-  
+Adafruit_DotStar strip(DOTSTAR_NUMPIXELS, DOTSTAR_DATAPIN, DOTSTAR_CLOCKPIN, DOTSTAR_BGR);
+#endif
+
+#ifdef OLED
+#define SCREEN_WIDTH 128 // OLED display width, in pixels
+#define SCREEN_HEIGHT 32 // OLED display height, in pixels
+
+// Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
+#define OLED_RESET     -1 // Reset pin # (or -1 if sharing Arduino reset pin)
+
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+#endif
+
 #define RED_LED_PIN 13
 #define DMX_RX_PIN 3
 #define DMX_BAUDRATE 250000
@@ -73,10 +100,8 @@ uint8_t read_byte_from_uart()
 }
 
 
-void setup() {  
-  pinMode(RED_LED_PIN, OUTPUT);
-  strip.begin(); // Initialize pins for output
-  strip.show();  // Turn all LEDs off ASAP
+void setup() 
+{  
 }  
 
 
@@ -118,12 +143,42 @@ private:
   std::function<void()> ext_attach;
 };
 
-
 void output_dmx_frame();
 void get_dmx_frame();
 uint8_t start_code;
 uint8_t dmx_frame[512];
-Coroutine dmx_loop([]{
+
+#ifdef OLED
+void display_levels(Adafruit_SSD1306 &display)
+{
+  display.clearDisplay();
+
+  display.setTextSize(2);
+  display.setTextColor(WHITE);
+  display.setCursor(0, 0);
+  // Display static text
+  char buf[256];
+  sprintf(buf, "%3d %3d\n%3d %3d", dmx_frame[0], dmx_frame[1], dmx_frame[2], dmx_frame[3]);
+  display.println(buf);
+  display.display(); 
+}
+#endif
+
+
+Coroutine dmx_loop([]
+{
+  pinMode(RED_LED_PIN, OUTPUT);
+#ifdef DOTSTAR
+  strip.begin(); // Initialize pins for output
+  strip.show();  // Turn all LEDs off ASAP
+#endif
+#ifdef OLED
+  if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C))  // Address 0x3D for 128x64
+  { 
+    TRACE("SSD1306 allocation failed");
+    return;
+  }
+#endif
   while(1)
   {
     get_dmx_frame();
@@ -131,13 +186,15 @@ Coroutine dmx_loop([]{
 
     if( frame_error )
     {
+      TRACE("frame error" );
       digitalWrite(RED_LED_PIN, HIGH);
       continue;
     }
   
     if( start_code == 0 )
+    {
       output_dmx_frame();
-      
+    }
     yield();
   }
 });
@@ -206,23 +263,26 @@ void output_dmx_frame()
       digitalWrite(RED_LED_PIN, HIGH);
   else 
       digitalWrite(RED_LED_PIN, LOW);
+#ifdef DOTSTAR
   strip.setPixelColor(0, (dmx_frame[0]<<16) + (dmx_frame[1]<<8) + dmx_frame[2]);
   strip.show();
+#endif
+#ifdef OLED
+  display_levels(display);
+#endif    
 }
 
-// With no functional changes, I was able to get the example program from the SSD1306 
-// display libaray to run in a coroutine very easily.
-#define SSD1306_EXAMPLE
 
-#ifdef SSD1306_EXAMPLE
+#ifdef SSD1306_EXAMPLE_AS_SUBPROGRAM
 #define setup subprogram_setup
 #define loop subprogram_loop
 // Modify this path to point to the appropriate ssd1306 example program.
-// Note: I had to move the setup() function to the bottom so that the functions it calls would be defined.
+// Note: I had to move the `setup()` function to the bottom of ssd1306_128x32_i2c.ino 
+// so that the functions it calls would be defined.
 #include "/home/jgraley/arduino/Arduino/libraries/Adafruit_SSD1306/examples/ssd1306_128x32_i2c/ssd1306_128x32_i2c.ino"
 #undef setup
 #undef loop
-Coroutine display_coroutine([]
+Coroutine display_subprogram([]
 {
   subprogram_setup(); 
   while(1) 
@@ -236,12 +296,8 @@ void loop()
   {
     dmx_loop();
   }
-  if( frame_error )
-  {
-    TRACE("frame error" );
-  }
   system_idle_tasks();
-#ifdef SSD1306_EXAMPLE
-  display_coroutine();
+#ifdef SSD1306_EXAMPLE_AS_SUBPROGRAM
+  display_subprogram();
 #endif
 }
