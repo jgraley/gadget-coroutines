@@ -20,13 +20,7 @@ volatile bool enable_fg = true;
 SERCOM *dmx_sercom = &sercom0;
 // Note: we are coding direct to the SERCOM API since we want to implement the ISR ourselves
 
-void (*SERCOM0_Handler_ptr)();
-
-void SERCOM0_Handler()  
-{
-  if( SERCOM0_Handler_ptr )
-    SERCOM0_Handler_ptr();
-}
+INTERRUPT_HANDLER(SERCOM0_Handler)
 
 void dmx_uart_init()
 {
@@ -187,9 +181,9 @@ void get_frame_data()
                      []{ dmx_uart_shutdown();
                          dmx_uart_claim_pins();
                          dmx_uart_init();
-                         SERCOM0_Handler_ptr = *me();}, 
+                         Attach_SERCOM0_Handler(*me());}, 
                      []{ dmx_uart_shutdown();
-                         SERCOM0_Handler_ptr = nullptr;},
+                         Detach_SERCOM0_Handler();},
                      []{ enable_fg=true; } ); 
 
   Debug(3);  

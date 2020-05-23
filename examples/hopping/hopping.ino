@@ -7,11 +7,13 @@
 
 void startTimer(int frequencyHz);
 void setTimerFrequency(int frequencyHz);
-void TC3_Handler();
 volatile bool enable_fg = true;
 
 #include "sam.h"
 extern volatile DeviceVectors exception_table;
+
+INTERRUPT_HANDLER(TC3_Handler)
+
 
 Coroutine led_flasher([]()
 {
@@ -25,7 +27,7 @@ Coroutine led_flasher([]()
   
       // "Hop" on to the interrupt
       enable_fg=false; 
-      me()->set_hop_lambda([](){ NVIC_EnableIRQ(TC3_IRQn); });
+      me()->set_hop_lambda([](){ Attach_TC3_Handler(*me()); NVIC_EnableIRQ(TC3_IRQn); });
       yield(); 
       TC->INTFLAG.bit.MC0 = 1;
   
@@ -41,6 +43,7 @@ Coroutine led_flasher([]()
   
       // "Hop" back to foreground
       NVIC_DisableIRQ(TC3_IRQn);
+      Detach_TC3_Handler();
       me()->set_hop_lambda([](){ enable_fg=true; }); 
       yield(); 
   
@@ -100,9 +103,6 @@ void startTimer(int frequencyHz) {
   while (TC->STATUS.bit.SYNCBUSY == 1); // wait for sync
 }
 
-void TC3_Handler() {
-  led_flasher();
-}
 
 void loop()
 {
