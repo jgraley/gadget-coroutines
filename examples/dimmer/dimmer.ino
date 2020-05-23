@@ -11,8 +11,6 @@ Adafruit_DotStar strip = Adafruit_DotStar(
   
 #define RED_LED_PIN 13
 #define DMX_RX_PIN 3
-#define DEBUG_PIN1 0
-#define DEBUG_PIN2 1
 #define DMX_BAUDRATE 250000
 
 volatile bool enable_fg = true;
@@ -77,18 +75,10 @@ uint8_t read_byte_from_uart()
 
 void setup() {  
   pinMode(RED_LED_PIN, OUTPUT);
-  pinMode(DEBUG_PIN1, OUTPUT);
-  pinMode(DEBUG_PIN2, OUTPUT);
   strip.begin(); // Initialize pins for output
   strip.show();  // Turn all LEDs off ASAP
 }  
 
-
-inline void Debug(int d)
-{
-   digitalWrite(DEBUG_PIN1, d / 2);
-   digitalWrite(DEBUG_PIN2, d % 2);
-}
 
 extern volatile uint32_t _ulTickCount;
 unsigned long my_micros( void )
@@ -186,8 +176,6 @@ void get_frame_data()
                          Detach_SERCOM0_Handler();},
                      []{ enable_fg=true; } ); 
 
-  Debug(3);  
-
   frame_error = false;
   start_code = read_byte_from_uart();
   if( frame_error )
@@ -206,13 +194,8 @@ void get_frame_data()
 
 void get_dmx_frame()
 {
-  Debug(0);
-
-  //strange();
   wait_for_break_pulse();             
-  get_frame_data();   
-  
-  Debug(frame_error?2:3);      
+  get_frame_data();        
 }
 
 
@@ -227,6 +210,26 @@ void output_dmx_frame()
   strip.show();
 }
 
+// With no functional changes, I was able to get the example program from the SSD1306 
+// display libaray to run in a coroutine very easily.
+#define SSD1306_EXAMPLE
+
+#ifdef SSD1306_EXAMPLE
+#define setup subprogram_setup
+#define loop subprogram_loop
+// Modify this path to point to the appropriate ssd1306 example program.
+// Note: I had to move the setup() function to the bottom so that the functions it calls would be defined.
+#include "/home/jgraley/arduino/Arduino/libraries/Adafruit_SSD1306/examples/ssd1306_128x32_i2c/ssd1306_128x32_i2c.ino"
+#undef setup
+#undef loop
+Coroutine display_coroutine([]
+{
+  subprogram_setup(); 
+  while(1) 
+    subprogram_loop();
+});
+#endif
+
 void loop()
 {
   if( enable_fg )
@@ -238,4 +241,7 @@ void loop()
     TRACE("frame error" );
   }
   system_idle_tasks();
+#ifdef SSD1306_EXAMPLE
+  display_coroutine();
+#endif
 }
