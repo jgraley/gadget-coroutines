@@ -4,6 +4,7 @@
 #include "Tracing.h"
 
 using namespace std;
+using namespace GC;
 
 SuperFunctor::SuperFunctor() :
     entrypoint_fpt(nullptr)

@@ -90,7 +90,7 @@ void handle_UART_error()
 
 uint8_t read_byte_from_uart()
 {
-  Coroutine::wait( []{ return dmx_sercom->isUARTError() || dmx_sercom->availableDataUART(); } );
+  GC::Coroutine::wait( []{ return dmx_sercom->isUARTError() || dmx_sercom->availableDataUART(); } );
 
   if(dmx_sercom->isUARTError())
   {
@@ -123,10 +123,10 @@ uint8_t start_code;
 uint8_t dmx_frame[512];
 
 
-Coroutine dmx_task([]
+GC::Coroutine dmx_task([]
 {
-  Hopper fg( []{ enable_fg=true; },
-             []{ enable_fg=false; } );                             
+  GC::Hopper fg( []{ enable_fg=true; },
+                 []{ enable_fg=false; } );                             
                  
   pinMode(RED_LED_PIN, OUTPUT);
 #ifdef DOTSTAR
@@ -166,16 +166,16 @@ Coroutine dmx_task([]
 void wait_for_break_pulse()
 {
   // "Hop" on to the pin interrupt
-  Hopper hopper( []{ attachInterrupt(DMX_RX_PIN, *me(), CHANGE); },
-                 []{ detachInterrupt(DMX_RX_PIN); } );                             
+  GC::Hopper hopper( []{ attachInterrupt(DMX_RX_PIN, *me(), CHANGE); },
+                     []{ detachInterrupt(DMX_RX_PIN); } );                             
 
   int len;
   do
   {
-    Coroutine::wait( []{ return digitalRead(DMX_RX_PIN)==0; } );
+    GC::Coroutine::wait( []{ return digitalRead(DMX_RX_PIN)==0; } );
     int t0 = my_micros();
     
-    Coroutine::wait( []{ return digitalRead(DMX_RX_PIN)==1; } );
+    GC::Coroutine::wait( []{ return digitalRead(DMX_RX_PIN)==1; } );
     int t1 = my_micros();
       
     len = t1 - t0;
@@ -186,12 +186,12 @@ void wait_for_break_pulse()
 void get_frame_data()
 {
   // "Hop" across to UART interrupt
-  Hopper hopper( []{ dmx_uart_shutdown();
-                     dmx_uart_claim_pins();
-                     dmx_uart_init();
-                     Attach_SERCOM0_Handler(*me());}, 
-                 []{ dmx_uart_shutdown();
-                     Detach_SERCOM0_Handler();} ); 
+  GC::Hopper hopper( []{ dmx_uart_shutdown();
+                         dmx_uart_claim_pins();
+                         dmx_uart_init();
+                         Attach_SERCOM0_Handler(*me());}, 
+                     []{ dmx_uart_shutdown();
+                         Detach_SERCOM0_Handler();} ); 
 
   frame_error = false;
   start_code = read_byte_from_uart();

@@ -7,6 +7,9 @@
 
 #include "SuperFunctor_arm.h"
 
+namespace GC
+{
+
 class SuperFunctor
 {
 public:
@@ -35,4 +38,5 @@ public:
 #endif
 };
 
+} // namespace
 #endif

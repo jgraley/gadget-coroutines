@@ -10,6 +10,9 @@
 
 #include <atomic>
 
+namespace GC
+{
+
 class RAII_CLS
 {
 public:    
@@ -19,5 +22,8 @@ public:
 private:
     std::atomic<void *> const previous_cls;
 };
+
+} // namespace
+
 
 #endif

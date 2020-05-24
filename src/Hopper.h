@@ -17,6 +17,9 @@
 
 #include <functional>
 
+namespace GC
+{
+
 class Hopper
 {
 public:
@@ -32,5 +35,7 @@ private:
   std::function<void()> detach;                             
   std::function<void()> attach;
 };
+
+} // namespace
 
 #endif

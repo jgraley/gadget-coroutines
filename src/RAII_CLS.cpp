@@ -10,6 +10,8 @@
 
 #include "Coroutine_arm.h"
 
+using namespace std;
+using namespace GC;
 
 RAII_CLS::RAII_CLS( void *new_cls ) :
   previous_cls( get_cls() )

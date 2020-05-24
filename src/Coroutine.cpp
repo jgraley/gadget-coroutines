@@ -18,6 +18,7 @@
 #include "Arduino.h"
 
 using namespace std;
+using namespace GC;
 
 // Only enable when constructing after system initialisation, eg in setup()
 #define CONSTRUCTOR_TRACE DISABLED_TRACE

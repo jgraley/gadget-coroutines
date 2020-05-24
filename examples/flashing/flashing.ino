@@ -17,7 +17,7 @@ __thread int tls_var;
 int global_var;
 
   
-Coroutine led_flasher([]()
+GC::Coroutine led_flasher_task([]()
 {
   int  local_var;
   while(1)
@@ -34,7 +34,7 @@ Coroutine led_flasher([]()
 
 
 #ifdef DOTSTAR
-Coroutine dotstar_flasher([]()
+GC::Coroutine dotstar_flasher_task([]()
 {
   strip.begin(); // Initialize pins for output
   strip.show();  // Turn all LEDs off ASAP
@@ -69,9 +69,9 @@ void loop() {
   Serial.println(tls_var);
   tls_var += 7;
   //TRACE("tls_var outside %p global %p local %p", &tls_var, &global_var, &local_var);
-  led_flasher();
+  led_flasher_task();
 #ifdef DOTSTAR
-  dotstar_flasher();
+  dotstar_flasher_task();
 #endif  
   system_idle_tasks();
 }

@@ -4,9 +4,7 @@
 #include "Hopper.h"
 #ifdef DOTSTAR
 #include <Adafruit_DotStar.h>
-#endif
 
-#ifdef DOTSTAR
 #define DOTSTAR_NUMPIXELS 1 
 #define DOTSTAR_DATAPIN   7
 #define DOTSTAR_CLOCKPIN  8
@@ -29,10 +27,10 @@ extern volatile DeviceVectors exception_table;
 INTERRUPT_HANDLER(TC3_Handler)
 
 
-Coroutine led_flasher([]()
+GC::Coroutine led_flasher_task([]()
 {
-  Hopper fg( []{ enable_fg=true; },
-             []{ enable_fg=false; } );                             
+  GC::Hopper fg( []{ enable_fg=true; },
+                 []{ enable_fg=false; } );                             
 
 #ifdef DOTSTAR
   strip.begin(); // Initialize pins for output
@@ -45,8 +43,8 @@ Coroutine led_flasher([]()
     if( random(2) )
     {
       // "Hop" on to the interrupt
-      Hopper hopper( []{ Attach_TC3_Handler(*me()); NVIC_EnableIRQ(TC3_IRQn); },
-                     []{ NVIC_DisableIRQ(TC3_IRQn); Detach_TC3_Handler(); } );      
+      GC::Hopper hopper( []{ Attach_TC3_Handler(*me()); NVIC_EnableIRQ(TC3_IRQn); },
+                         []{ NVIC_DisableIRQ(TC3_IRQn); Detach_TC3_Handler(); } );      
       yield(); // when this returns we're in ISR 
       TC->INTFLAG.bit.MC0 = 1; // Ack the interrupt
       
@@ -80,7 +78,7 @@ Coroutine led_flasher([]()
   
       digitalWrite(RED_LED_PIN, false);
   
-      Coroutine::yield(); 
+      GC::Coroutine::yield(); 
     }
   }
 });
@@ -139,7 +137,7 @@ void loop()
 {
   if( enable_fg )
   {
-    led_flasher();
+    led_flasher_task();
   }
   int n = random(3000, 100000);
   for(volatile int i=0; i<n; i++ )

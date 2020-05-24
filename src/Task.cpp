@@ -10,6 +10,7 @@
 #include <atomic>
 
 using namespace std;
+using namespace GC;
 
 Task::Task() :
   magic( MAGIC )

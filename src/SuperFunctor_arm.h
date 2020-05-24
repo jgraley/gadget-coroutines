@@ -5,6 +5,9 @@
 #include <cstddef>
 #include <cstdint>
 
+namespace GC
+{
+
 // This file contains low-level stuff for ARM only
 static_assert( __arm__==1 || __thumb__==1 );
 
@@ -53,5 +56,6 @@ inline void *ptr_to_function_ptr( MachineInstruction *ptr )
     
 static const int pipeline_overshoot_instructions = 2;
 
+} // namespace
     
 #endif

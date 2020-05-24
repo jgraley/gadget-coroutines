@@ -15,6 +15,9 @@
 
 #include "Arduino.h"
 
+using namespace std;
+using namespace GC;
+
 // This makes sure the CLS is a NULL pointer for the foreground
 // context (i.e. when outside any coroutine)
 // CLS is Coroutine-Local Storage

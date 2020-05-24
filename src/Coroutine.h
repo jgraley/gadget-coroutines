@@ -21,6 +21,9 @@
 #include <cstdint>
 #include "Arduino.h"
 
+namespace GC
+{
+
 class Coroutine : public Task
 {
 public:
@@ -104,10 +107,11 @@ void Coroutine::yield()
     me_value->yield_nonstatic();
 }
 
+} // namespace
 
-inline Coroutine *me()
+inline GC::Coroutine *me()
 {
-    return Coroutine::me();
+    return GC::Coroutine::me();
 }
 
 #endif

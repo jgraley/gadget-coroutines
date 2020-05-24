@@ -18,6 +18,9 @@
 
 #include <functional>
 
+namespace GC
+{
+
 class Task : public SuperFunctor
 {
 public:
@@ -50,6 +53,8 @@ void Task::set_hop_lambda( std::function<void()> hop )
 {
     hop_lambda = hop;
 }
+
+} // namespace
 
 // NOTE: if super functors are disabled, we should be able to change the 
 // implementation here to use `Task &` and `Task *` directly.

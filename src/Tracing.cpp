@@ -14,7 +14,7 @@
 #include "Arduino.h"
 
 using namespace std;
-
+using namespace GC;
 
 void _gcoroutines_log(const char *message)
 {
@@ -24,6 +24,7 @@ void _gcoroutines_log(const char *message)
   delay(100);
   set_cls(cls);
 }
+
 
 function< void(const char *) >  _gcoroutines_logger = _gcoroutines_log;
 

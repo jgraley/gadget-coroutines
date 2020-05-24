@@ -9,6 +9,9 @@
 #include <csetjmp> 
 #include <cstring>
 
+namespace GC
+{
+
 // This file contains low-level stuff for ARM only
 static_assert( __arm__==1 || __thumb__==1 );
 
@@ -89,5 +92,7 @@ inline void *get_sp()
 }
 
 typedef int *jmp_buf_ptr;
+
+} // namespace
 
 #endif
