@@ -36,6 +36,7 @@ Adafruit_DotStar strip(DOTSTAR_NUMPIXELS, DOTSTAR_DATAPIN, DOTSTAR_CLOCKPIN, DOT
 #define OLED_RESET     -1 // Reset pin # (or -1 if sharing Arduino reset pin)
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+void display_bad_frame();
 #endif
 
 #define RED_LED_PIN 13
@@ -147,8 +148,12 @@ GC::Coroutine dmx_task([]
 
     if( frame_error )
     {
-      TRACE("frame error" );
       digitalWrite(RED_LED_PIN, HIGH);
+#ifdef OLED
+      display_bad_frame();
+#else
+      TRACE("frame error" );
+#endif      
       continue;
     }
   
@@ -217,7 +222,7 @@ void get_dmx_frame()
 
 
 #ifdef OLED
-void display_levels(Adafruit_SSD1306 &display)
+void display_levels()
 {
   display.clearDisplay();
 
@@ -227,6 +232,25 @@ void display_levels(Adafruit_SSD1306 &display)
   // Display static text
   char buf[256];
   sprintf(buf, "%02X%02X%02X %3d", dmx_frame[0], dmx_frame[1], dmx_frame[2], dmx_frame[3]);
+  display.println(buf);
+#ifdef STACK_USAGE
+  sprintf(buf, "T%d S%d", me()->get_tls_usage(), me()->estimate_stack_peak_usage());
+  display.println(buf);
+#endif  
+  display.display(); 
+}
+
+
+void display_bad_frame()
+{
+  display.clearDisplay();
+
+  display.setTextSize(2);
+  display.setTextColor(WHITE);
+  display.setCursor(0, 0);
+  // Display static text
+  char buf[256];
+  sprintf(buf, "Frame Err!");
   display.println(buf);
 #ifdef STACK_USAGE
   sprintf(buf, "T%d S%d", me()->get_tls_usage(), me()->estimate_stack_peak_usage());
@@ -248,7 +272,7 @@ void output_dmx_frame()
   strip.show();
 #endif
 #ifdef OLED
-  display_levels(display);
+  display_levels();
 #endif    
 }
 
