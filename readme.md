@@ -30,9 +30,10 @@ _Stacked coroutines for the bare-metal environment._
    - DotStar LED
    - SSD1306 OLED display
  - `dimmer.ino` can also run the SSD1306 OLED display driver example 
-   concurrent with the DMX receiver - _impossible without
+   simultaneous with the DMX receiver - _impossible without
    coroutines!_.
 
-## More documentation to follow
-   
-(C) John Graley [LGPL license](license.md) applies.
+## More documentation soon!
+
+------------------   
+(C) 2020 John Graley [LGPL license](license.md) applies.
