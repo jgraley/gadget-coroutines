@@ -2,4 +2,4 @@
 
 _Stacked coroutines for the bare-metal environment._
 
-[code](src/Coroutine.h)
+(C) John Graley [LGPL license](license.md) applies.
