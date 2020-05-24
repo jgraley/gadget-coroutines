@@ -3,10 +3,10 @@
 _Stacked coroutines for the bare-metal environment._
 
 ## What can they do?
- - Run many functions at the same time. These _co-operate_ to share the 
-   CPU. When one of them wants to pause processing, it calls 
-   `delay()` or `yield()`. When it's time to continue, `delay()` or 
-   `yield()` will return.
+ - **Coroutines**: run many functions at the same time. These 
+   _co-operate_ to share the CPU. When one of them wants to pause 
+   processing, it calls `delay()` or `yield()`. When it's time to 
+   continue, `delay()` or `yield()` will return.
  - **Stacked**: a coroutine can call ordinary functions, to any depth, 
    which can call `delay()` or `yield()`.
  - **Hopping**: coroutines may be invoked from interrupt service 
