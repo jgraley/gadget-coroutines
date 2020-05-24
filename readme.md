@@ -3,7 +3,7 @@
 _Stacked coroutines for the bare-metal environment._
 
 ## What can they do?
- - **Coroutines**: run many functions at the same time. These 
+ - **Coroutine**: run many functions at the same time. These 
    _co-operate_ to share the CPU. When one of them wants to pause 
    processing, it calls `delay()` or `yield()`. When it's time to 
    continue, `delay()` or `yield()` will return.
@@ -12,7 +12,7 @@ _Stacked coroutines for the bare-metal environment._
  - **Hopping**: coroutines may be invoked from interrupt service 
    routines. This enables a coroutine to respond rapidly to events.
  - **TLS**: coroutine-local storage is supported via gcc's `__thread`. 
- - **SuperFunctors**: coroutines can be invoked as C-style call-backs. 
+ - **SuperFunctor**: coroutines can be invoked as C-style call-backs. 
 
 ## What platforms are supported?
  - Only tested on **AdaFruit Trinket M0**, which is based on **Atmel 
