@@ -1,4 +1,5 @@
 # Gadget Coroutines
 
-_Stacked coroutines for the baare-metal environment._
+_Stacked coroutines for the bare-metal environment._
 
+[code](examples/Coroutine.h)
