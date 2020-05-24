@@ -9,9 +9,10 @@ _Stacked coroutines for the bare-metal environment._
    `yield()` will return.
  - **Stacked**: a coroutine can call ordinary functions, to any depth, 
    which can call `delay()` or `yield()`.
- - **TLS**: coroutine-local storage is supported via gcc's `__thread`. 
  - **Hopping**: coroutines may be invoked from interrupt service 
    routines. This enables a coroutine to respond rapidly to events.
+ - **TLS**: coroutine-local storage is supported via gcc's `__thread`. 
+ - **SuperFunctors**: coroutines can be invoked as C-style call-backs. 
 
 ## What platforms are supported?
  - Only tested on **AdaFruit Trinket M0**, which is based on **Atmel 
