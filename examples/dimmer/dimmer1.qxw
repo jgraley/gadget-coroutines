@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Workspace>
-<Workspace xmlns="http://www.qlcplus.org/Workspace" CurrentWindow="FixtureManager">
+<Workspace xmlns="http://www.qlcplus.org/Workspace" CurrentWindow="SimpleDesk">
  <Creator>
   <Name>Q Light Controller Plus</Name>
   <Version>4.12.2</Version>
@@ -10,7 +10,7 @@
   <InputOutputMap>
    <Universe Name="Universe 1" ID="0">
     <Output Plugin="DMX USB" Line="0">
-     <PluginParameters UniverseChannels="4"/>
+     <PluginParameters UniverseChannels="5"/>
     </Output>
    </Universe>
    <Universe Name="Universe 2" ID="1" Passthrough="True">
@@ -39,10 +39,21 @@
    <Address>3</Address>
    <Channels>1</Channels>
   </Fixture>
+  <Fixture>
+   <Manufacturer>Generic</Manufacturer>
+   <Model>Generic</Model>
+   <Mode>1 Channel</Mode>
+   <ID>2</ID>
+   <Name>Dimmers</Name>
+   <Universe>0</Universe>
+   <Address>4</Address>
+   <Channels>1</Channels>
+  </Fixture>
   <ChannelsGroup ID="0" Name="New Group" Value="0" InputUniverse="1" InputChannel="12">0,0</ChannelsGroup>
   <ChannelsGroup ID="1" Name="New Group" Value="0" InputUniverse="1" InputChannel="11">0,1</ChannelsGroup>
   <ChannelsGroup ID="2" Name="New Group" Value="0" InputUniverse="1" InputChannel="14">0,2</ChannelsGroup>
   <ChannelsGroup ID="3" Name="New Group" Value="0" InputUniverse="1" InputChannel="198">1,0</ChannelsGroup>
+  <ChannelsGroup ID="4" Name="New Group" Value="0" InputUniverse="1" InputChannel="15">2,0</ChannelsGroup>
  </Engine>
  <VirtualConsole>
   <Frame Caption="">

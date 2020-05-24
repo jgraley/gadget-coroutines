@@ -1,6 +1,8 @@
+#define DOTSTAR
 
 #include "Coroutine.h"
 
+#ifdef DOTSTAR
 #include <Adafruit_DotStar.h>
 
 #define DOTSTAR_NUMPIXELS 1 
@@ -9,6 +11,7 @@
 
 Adafruit_DotStar strip = Adafruit_DotStar(
   DOTSTAR_NUMPIXELS, DOTSTAR_DATAPIN, DOTSTAR_CLOCKPIN, DOTSTAR_BGR);
+#endif
 
 __thread int tls_var;
 int global_var;
@@ -30,8 +33,11 @@ Coroutine led_flasher([]()
 }); 
 
 
+#ifdef DOTSTAR
 Coroutine dotstar_flasher([]()
 {
+  strip.begin(); // Initialize pins for output
+  strip.show();  // Turn all LEDs off ASAP
   while(1)
   {
     strip.setPixelColor(0, 10<<16); // dim red
@@ -44,7 +50,7 @@ Coroutine dotstar_flasher([]()
     tls_var += 10;    
   }
 }); 
-
+#endif
 
 // the setup function runs once when you press reset or power the board
 void setup() {
@@ -64,6 +70,8 @@ void loop() {
   tls_var += 7;
   //TRACE("tls_var outside %p global %p local %p", &tls_var, &global_var, &local_var);
   led_flasher();
+#ifdef DOTSTAR
   dotstar_flasher();
+#endif  
   system_idle_tasks();
 }

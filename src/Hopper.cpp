@@ -11,4 +11,5 @@
 
 using namespace std;
 
+__thread Hopper *Hopper::current_hop;
 

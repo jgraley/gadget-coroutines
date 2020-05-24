@@ -21,29 +21,38 @@
 class Hopper
 {
 public:
-  Hopper( std::function<void()> ext_detach_, std::function<void()> my_attach_, std::function<void()> my_detach_, std::function<void()> ext_attach_ ) :
-    my_detach( my_detach_ ),
-    ext_attach( ext_attach_ )
+  Hopper( std::function<void()> &&attach_, std::function<void()> &&detach_ ) :
+    previous_hop( current_hop ),
+    attach( attach_ ),
+    detach( detach_ )
   {
-    ext_detach_();
-    me()->set_hop_lambda( my_attach_ );
+    if( previous_hop )
+      previous_hop->detach();
+    me()->set_hop_lambda( attach );
+    current_hop = this;
   }
 
-  void hop(std::function<void()> my_attach_, std::function<void()> my_detach_)
+  void hop(std::function<void()> new_attach, std::function<void()> new_detach)
   {
-    my_detach();
-    me()->set_hop_lambda( my_attach_ );
-    my_detach = my_detach_;
+    detach();
+    attach = new_attach;
+    detach = new_detach;
+    me()->set_hop_lambda( attach );
   }
 
   ~Hopper()
   {
-    my_detach();
-    me()->set_hop_lambda( ext_attach );
+    current_hop = previous_hop;
+    detach();
+    if( previous_hop )
+      me()->set_hop_lambda( previous_hop->attach );
   }
 private: 
-  std::function<void()> my_detach;                             
-  std::function<void()> ext_attach;
+  Hopper * const previous_hop;
+  static __thread Hopper *current_hop;
+
+  std::function<void()> detach;                             
+  std::function<void()> attach;
 };
 
 #endif

@@ -1,15 +1,15 @@
 #define OLED
 #define DOTSTAR
+#define STACK_USAGE
 
 // With no functional changes, I was able to get the example program from the SSD1306 
 // display libaray to run in a coroutine very easily. The example program, ssd1306_128x32_i2c.ino
 // contains long delays of a second or two via the `delay()` function. However, `delay()` yields
 // so we can still get serived promptly when in foreground. Therefore, dimming remains smooth.
-//#define SSD1306_EXAMPLE_AS_SUBPROGRAM
+//#define SSD1306_EXAMPLE_AS_SUBSKETCH
 
 #include "Coroutine.h"
 #include "Hopper.h"
-#include <Adafruit_DotStar.h>
 #include "wiring_private.h"
 
 #ifdef OLED
@@ -19,6 +19,8 @@
 #endif
 
 #ifdef DOTSTAR
+#include <Adafruit_DotStar.h>
+ 
 #define DOTSTAR_NUMPIXELS 1 
 #define DOTSTAR_DATAPIN   7
 #define DOTSTAR_CLOCKPIN  8
@@ -115,31 +117,17 @@ unsigned long my_micros( void )
 }
 
 
-
 void output_dmx_frame();
 void get_dmx_frame();
 uint8_t start_code;
 uint8_t dmx_frame[512];
 
-#ifdef OLED
-void display_levels(Adafruit_SSD1306 &display)
+
+Coroutine dmx_task([]
 {
-  display.clearDisplay();
-
-  display.setTextSize(2);
-  display.setTextColor(WHITE);
-  display.setCursor(0, 0);
-  // Display static text
-  char buf[256];
-  sprintf(buf, "%3d %3d\n%3d %3d", dmx_frame[0], dmx_frame[1], dmx_frame[2], dmx_frame[3]);
-  display.println(buf);
-  display.display(); 
-}
-#endif
-
-
-Coroutine dmx_loop([]
-{
+  Hopper fg( []{ enable_fg=true; },
+             []{ enable_fg=false; } );                             
+                 
   pinMode(RED_LED_PIN, OUTPUT);
 #ifdef DOTSTAR
   strip.begin(); // Initialize pins for output
@@ -168,6 +156,9 @@ Coroutine dmx_loop([]
     {
       output_dmx_frame();
     }
+#if defined(STACK_USAGE) && !defined(OLED)
+    TRACE("TLS %d Stack %d", me()->get_tls_usage(), me()->estimate_stack_peak_usage());
+#endif
     yield();
   }
 });
@@ -175,10 +166,8 @@ Coroutine dmx_loop([]
 void wait_for_break_pulse()
 {
   // "Hop" on to the pin interrupt
-  Hopper hopper( []{ enable_fg=false; },
-                 []{ attachInterrupt(DMX_RX_PIN, *me(), CHANGE); },
-                 []{ detachInterrupt(DMX_RX_PIN); },
-                 []{ enable_fg=true; } );                             
+  Hopper hopper( []{ attachInterrupt(DMX_RX_PIN, *me(), CHANGE); },
+                 []{ detachInterrupt(DMX_RX_PIN); } );                             
 
   int len;
   do
@@ -197,14 +186,12 @@ void wait_for_break_pulse()
 void get_frame_data()
 {
   // "Hop" across to UART interrupt
-  Hopper hopper( []{ enable_fg=false; },
-                 []{ dmx_uart_shutdown();
+  Hopper hopper( []{ dmx_uart_shutdown();
                      dmx_uart_claim_pins();
                      dmx_uart_init();
                      Attach_SERCOM0_Handler(*me());}, 
                  []{ dmx_uart_shutdown();
-                     Detach_SERCOM0_Handler();},
-                 []{ enable_fg=true; } ); 
+                     Detach_SERCOM0_Handler();} ); 
 
   frame_error = false;
   start_code = read_byte_from_uart();
@@ -229,6 +216,26 @@ void get_dmx_frame()
 }
 
 
+#ifdef OLED
+void display_levels(Adafruit_SSD1306 &display)
+{
+  display.clearDisplay();
+
+  display.setTextSize(2);
+  display.setTextColor(WHITE);
+  display.setCursor(0, 0);
+  // Display static text
+  char buf[256];
+  sprintf(buf, "%02X%02X%02X %3d", dmx_frame[0], dmx_frame[1], dmx_frame[2], dmx_frame[3]);
+  display.println(buf);
+#ifdef STACK_USAGE
+  sprintf(buf, "T%d S%d", me()->get_tls_usage(), me()->estimate_stack_peak_usage());
+  display.println(buf);
+#endif  
+  display.display(); 
+}
+#endif
+
 void output_dmx_frame()
 {
   //TRACE("%dus: %d %d %d %d %d %d", len, dmx_frame[0], dmx_frame[1], dmx_frame[2], dmx_frame[3], dmx_frame[4], dmx_frame[5] );
@@ -246,20 +253,20 @@ void output_dmx_frame()
 }
 
 
-#ifdef SSD1306_EXAMPLE_AS_SUBPROGRAM
-#define setup subprogram_setup
-#define loop subprogram_loop
+#ifdef SSD1306_EXAMPLE_AS_SUBSKETCH
+#define setup subsketch_setup
+#define loop subsketch_loop
 // Modify this path to point to the appropriate ssd1306 example program.
 // Note: I had to move the `setup()` function to the bottom of ssd1306_128x32_i2c.ino 
 // so that the functions it calls would be defined.
 #include "/home/jgraley/arduino/Arduino/libraries/Adafruit_SSD1306/examples/ssd1306_128x32_i2c/ssd1306_128x32_i2c.ino"
 #undef setup
 #undef loop
-Coroutine display_subprogram([]
+Coroutine display_subsketch([]
 {
-  subprogram_setup(); 
+  subsketch_setup(); 
   while(1) 
-    subprogram_loop();
+    subsketch_loop();
 });
 #endif
 
@@ -267,7 +274,7 @@ void loop()
 {
   if( enable_fg )
   {
-    dmx_loop();
+    dmx_task();
   }
   system_idle_tasks();
 #ifdef SSD1306_EXAMPLE_AS_SUBPROGRAM

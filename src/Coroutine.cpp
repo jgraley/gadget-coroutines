@@ -25,7 +25,7 @@ using namespace std;
 Coroutine::Coroutine( function<void()> child_function_ ) :
   child_function( child_function_ ),
   stack_size( default_stack_size ),
-  child_stack_memory( new byte[stack_size] ),
+  child_stack_memory( (byte *)calloc(default_stack_size, 1) ),
   child_status( READY )
 {    
   ASSERT(child_function, "NULL child function was supplied");
@@ -94,6 +94,21 @@ void Coroutine::set_hop_lambda( std::function<void()> hop )
 pair<const byte *, const byte *> Coroutine::get_child_stack_bounds()
 {
     return make_pair(child_stack_memory, child_stack_memory+stack_size);
+}
+
+
+int Coroutine::estimate_stack_peak_usage()
+{
+    byte *p = child_stack_memory + tls_top;
+    while( *p==0 && p < child_stack_memory+stack_size )
+      p++;
+    return child_stack_memory+stack_size-p;      
+}
+
+
+int Coroutine::get_tls_usage()
+{
+    return tls_top;
 }
 
 
@@ -211,7 +226,7 @@ void Coroutine::jump_to_parent()
 
 
 extern void *__HeapLimit;
-void *Coroutine::tls_get_address(void *obj)
+void *Coroutine::get_tls_pointer(void *obj)
 {
     __emutls_object * const euo = (__emutls_object *)obj;   
     const Coroutine *me = ::me();

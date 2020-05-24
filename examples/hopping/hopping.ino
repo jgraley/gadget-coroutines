@@ -1,6 +1,20 @@
-#include "Coroutine.h"
+#define DOTSTAR
 
-#define LED_PIN 13
+#include "Coroutine.h"
+#include "Hopper.h"
+#ifdef DOTSTAR
+#include <Adafruit_DotStar.h>
+#endif
+
+#ifdef DOTSTAR
+#define DOTSTAR_NUMPIXELS 1 
+#define DOTSTAR_DATAPIN   7
+#define DOTSTAR_CLOCKPIN  8
+
+Adafruit_DotStar strip(DOTSTAR_NUMPIXELS, DOTSTAR_DATAPIN, DOTSTAR_CLOCKPIN, DOTSTAR_BGR);
+#endif
+
+#define RED_LED_PIN 13
 
 #define CPU_HZ 48000000
 #define TIMER_PRESCALER_DIV 1024
@@ -17,37 +31,54 @@ INTERRUPT_HANDLER(TC3_Handler)
 
 Coroutine led_flasher([]()
 {
+  Hopper fg( []{ enable_fg=true; },
+             []{ enable_fg=false; } );                             
+
+#ifdef DOTSTAR
+  strip.begin(); // Initialize pins for output
+  strip.show();  // Turn all LEDs off ASAP
+#endif
+
   TcCount16* TC = (TcCount16*) TC3;
   while(1)
   {
     if( random(2) )
     {
-      // Emit a flash "on" the interrupt
-      digitalWrite(LED_PIN, true);
-  
       // "Hop" on to the interrupt
-      enable_fg=false; 
-      me()->set_hop_lambda([](){ Attach_TC3_Handler(*me()); NVIC_EnableIRQ(TC3_IRQn); });
-      yield(); 
-      TC->INTFLAG.bit.MC0 = 1;
+      Hopper hopper( []{ Attach_TC3_Handler(*me()); NVIC_EnableIRQ(TC3_IRQn); },
+                     []{ NVIC_DisableIRQ(TC3_IRQn); Detach_TC3_Handler(); } );      
+      yield(); // when this returns we're in ISR 
+      TC->INTFLAG.bit.MC0 = 1; // Ack the interrupt
+      
+      // Emit a flash "on" the interrupt
+#ifdef DOTSTAR
+      strip.setPixelColor(0, 10<<8);
+      strip.show();
+#else
+      digitalWrite(RED_LED_PIN, true);
+#endif
   
-      digitalWrite(LED_PIN, false);
+      yield(); // await next interrupt
+      TC->INTFLAG.bit.MC0 = 1; // Ack the interrupt
   
-      Coroutine::yield(); 
-      TC->INTFLAG.bit.MC0 = 1;
+#ifdef DOTSTAR
+      strip.setPixelColor(0, 0);
+      strip.show();
+#else
+      digitalWrite(RED_LED_PIN, false);
+#endif
+      // First yield after this block will "hop" back to foreground      
     }
     else
     {
-      // Emit a flash "on" the loop() function
-      digitalWrite(LED_PIN, true);
+      yield(); // definiterly in foreground when this returns
+      
+      // Emit a flash "on" foreground
+      digitalWrite(RED_LED_PIN, true);
   
-      // "Hop" back to foreground
-      NVIC_DisableIRQ(TC3_IRQn);
-      Detach_TC3_Handler();
-      me()->set_hop_lambda([](){ enable_fg=true; }); 
       yield(); 
   
-      digitalWrite(LED_PIN, false);
+      digitalWrite(RED_LED_PIN, false);
   
       Coroutine::yield(); 
     }
@@ -56,7 +87,7 @@ Coroutine led_flasher([]()
 
 
 void setup() {
-  pinMode(LED_PIN, OUTPUT);
+  pinMode(RED_LED_PIN, OUTPUT);
   startTimer(10);
 }
 

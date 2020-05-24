@@ -33,7 +33,9 @@ public:
   static void wait( std::function<bool()> test );
   void set_hop_lambda( std::function<void()> hop );
   std::pair<const byte *, const byte *> get_child_stack_bounds();
-
+  int estimate_stack_peak_usage();
+  int get_tls_usage();
+  
 private:
   enum ChildStatus
   {
@@ -71,7 +73,7 @@ private:
   void jump_to_child();
   void yield_nonstatic();
   [[ noreturn ]] void jump_to_parent();
-  static void *tls_get_address(void *obj) asm ("__emutls_get_address");
+  static void *get_tls_pointer(void *obj) asm ("__emutls_get_address");
   
   const std::function<void()> child_function; 
   const int stack_size;
@@ -83,7 +85,7 @@ private:
   static int tls_top;
   static byte *tls_outside_heap;
     
-  static const int default_stack_size = 1024;
+  static const int default_stack_size = 2048;
 };
 
 ///-- 
