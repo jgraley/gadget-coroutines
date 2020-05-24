@@ -2,4 +2,4 @@
 
 _Stacked coroutines for the bare-metal environment._
 
-[code](examples/Coroutine.h)
+[code](src/Coroutine.h)
