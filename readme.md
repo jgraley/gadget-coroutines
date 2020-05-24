@@ -1,6 +1,6 @@
 # Gadget Coroutines
 
-_Stacked coroutines for the bare-metal environment._
+_Stacked coroutines for the Arduino environment._
 
 ## What can they do?
  - **Coroutine**: run many functions at the same time. These 
