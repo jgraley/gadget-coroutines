@@ -33,7 +33,7 @@ _Stacked coroutines for the bare-metal environment._
    simultaneous with the DMX receiver - _impossible without
    coroutines!_.
 
-## More documentation soon!
+## More documentation coming soon!
 
 ------------------   
 (C) 2020 John Graley [LGPL license](license.md) applies.
