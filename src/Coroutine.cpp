@@ -19,6 +19,7 @@
 
 using namespace std;
 using namespace GC;
+using namespace Arm;
 
 // Only enable when constructing after system initialisation, eg in setup()
 #define CONSTRUCTOR_TRACE DISABLED_TRACE
@@ -138,7 +139,7 @@ void Coroutine::prepare_child_jmp_buf( jmp_buf &child_jmp_buf, const jmp_buf &in
   copy_jmp_buf( child_jmp_buf, initial_jmp_buf );
   set_jmp_buf_sp( child_jmp_buf, child_stack_pointer);
   set_jmp_buf_fp( child_jmp_buf, child_frame_pointer);
-  set_jmp_buf_cls( child_jmp_buf, this);
+  set_jmp_buf_tr( child_jmp_buf, this);
 }
 
 

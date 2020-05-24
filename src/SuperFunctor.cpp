@@ -5,6 +5,7 @@
 
 using namespace std;
 using namespace GC;
+using namespace Arm;
 
 SuperFunctor::SuperFunctor() :
     entrypoint_fpt(nullptr)

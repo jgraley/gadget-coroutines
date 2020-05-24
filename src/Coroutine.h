@@ -96,7 +96,7 @@ private:
 
 Coroutine *Coroutine::me()
 {
-  return (Coroutine *)( get_cls() );
+  return (Coroutine *)( Arm::get_tr() );
 }
 
 

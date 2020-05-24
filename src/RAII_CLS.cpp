@@ -12,15 +12,16 @@
 
 using namespace std;
 using namespace GC;
+using namespace Arm;
 
 RAII_CLS::RAII_CLS( void *new_cls ) :
-  previous_cls( get_cls() )
+  previous_cls( get_tr() )
 {
-  set_cls( new_cls );
+  set_tr( new_cls );
 }
 
 
 RAII_CLS::~RAII_CLS()
 {
-  set_cls( previous_cls );
+  set_tr( previous_cls );
 }

@@ -17,13 +17,13 @@
 
 using namespace std;
 using namespace GC;
+using namespace Arm;
 
-// This makes sure the CLS is a NULL pointer for the foreground
+// This makes sure the TR is a NULL pointer for the foreground
 // context (i.e. when outside any coroutine)
-// CLS is Coroutine-Local Storage
 void __attribute__ ((constructor)) init_baseline_cls()
 {
-  set_cls( nullptr );
+  set_tr( nullptr );
 }
 
 

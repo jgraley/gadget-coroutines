@@ -25,9 +25,9 @@ private:
   typedef void (SuperFunctor::* EntryPointMFP)();
   typedef void (*EntryPointFPT)( SuperFunctor *this_ );
     
-  static std::pair<MachineInstruction *, int> GetAssembly();
+  static std::pair<Arm::MachineInstruction *, int> GetAssembly();
 
-  MachineInstruction entrypoint_thunk[SUPER_FUNCTOR_THUNK_ASSEMBLY_SIZE];
+  Arm::MachineInstruction entrypoint_thunk[SUPER_FUNCTOR_THUNK_ASSEMBLY_SIZE];
   EntryPointFPT entrypoint_fpt; 
 
 #ifdef SUPERFUNCTOR_TESTS  

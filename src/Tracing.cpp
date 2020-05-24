@@ -15,14 +15,15 @@
 
 using namespace std;
 using namespace GC;
+using namespace Arm;
 
 void _gcoroutines_log(const char *message)
 {
-  void *cls = get_cls();
-  set_cls(nullptr);
+  void *cls = get_tr();
+  set_tr(nullptr);
   Serial.println(message); 
   delay(100);
-  set_cls(cls);
+  set_tr(cls);
 }
 
 
