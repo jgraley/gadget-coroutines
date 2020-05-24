@@ -12,7 +12,6 @@
   #error This library needs at least a C++11 compliant compiler
 #endif
 
-
 #include "Tracing.h"
 #include "Coroutine.h"
 
@@ -21,32 +20,11 @@
 class Hopper
 {
 public:
-  Hopper( std::function<void()> &&attach_, std::function<void()> &&detach_ ) :
-    previous_hop( current_hop ),
-    attach( attach_ ),
-    detach( detach_ )
-  {
-    if( previous_hop )
-      previous_hop->detach();
-    me()->set_hop_lambda( attach );
-    current_hop = this;
-  }
+  Hopper( std::function<void()> &&attach_, std::function<void()> &&detach_ );
+  ~Hopper();
+  
+  void hop(std::function<void()> &&new_attach, std::function<void()> &&new_detach);
 
-  void hop(std::function<void()> new_attach, std::function<void()> new_detach)
-  {
-    detach();
-    attach = new_attach;
-    detach = new_detach;
-    me()->set_hop_lambda( attach );
-  }
-
-  ~Hopper()
-  {
-    current_hop = previous_hop;
-    detach();
-    if( previous_hop )
-      me()->set_hop_lambda( previous_hop->attach );
-  }
 private: 
   Hopper * const previous_hop;
   static __thread Hopper *current_hop;
