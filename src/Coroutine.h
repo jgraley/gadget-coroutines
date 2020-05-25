@@ -19,6 +19,7 @@
 #include <functional>
 #include <csetjmp> 
 #include <cstdint>
+#include <atomic>
 #include "Arduino.h"
 
 namespace GC
@@ -69,6 +70,16 @@ private:
     void *templ;
   };
 
+  class RAII_TR
+  {
+  public:    
+    inline RAII_TR( void *new_tr );
+    inline ~RAII_TR();
+        
+  private:
+    std::atomic<void *> const previous_tr;
+  };
+
   byte *prepare_child_stack( byte *frame_end, byte *stack_pointer );
   void prepare_child_jmp_buf( jmp_buf &child_jmp_buf, const jmp_buf &initial_jmp_buf, byte *parent_stack_pointer, byte *child_stack_pointer );
   [[ noreturn ]] void child_main_function();
@@ -107,11 +118,24 @@ void Coroutine::yield()
     me_value->yield_nonstatic();
 }
 
+
+Coroutine::RAII_TR::RAII_TR( void *new_tr ) :
+  previous_tr( Arm::get_tr() )
+{
+  Arm::set_tr( new_tr );
+}
+
+
+Coroutine::RAII_TR::~RAII_TR()
+{
+  Arm::set_tr( previous_tr );
+}
+
 } // namespace
 
 inline GC::Coroutine *me()
 {
-    return GC::Coroutine::me();
+  return GC::Coroutine::me();
 }
 
 #endif
