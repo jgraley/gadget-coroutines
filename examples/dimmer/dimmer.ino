@@ -222,8 +222,7 @@ void wait_for_break_pulse()
 void get_frame_data()
 {
   // "Hop" across to UART interrupt
-  GC::Hopper hopper( []{ dmx_uart_shutdown();
-                         dmx_uart_claim_pins();
+  GC::Hopper hopper( []{ dmx_uart_claim_pins();
                          dmx_uart_init();
                          Attach_SERCOM0_Handler(*me());}, 
                      []{ dmx_uart_shutdown();
