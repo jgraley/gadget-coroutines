@@ -83,10 +83,10 @@ volatile bool enable_fg = true;
 // 1. We use the INTERRUPT_HANDLER to generate an interrupt handler.
 // 2. This interrupt handler forwards throuh a vector that is non_const.
 // 3. Name of vector is just handler name with _ptr appended.
-// 4. We construct a GC_Uart instead of a Uart, and pass in the vector.
+// 4. We construct a GC::Uart instead of a Uart, and pass in the vector.
 // 5. You'll have to comment out ISR and Uart declrations in variant.h/cpp
 INTERRUPT_HANDLER(SERCOM0_Handler)
-GC_Uart Serial1(&sercom0, get_SERCOM0_Handler(), PIN_SERIAL1_RX, PIN_SERIAL1_TX, PAD_SERIAL1_RX, PAD_SERIAL1_TX);
+GC::Uart Serial1(&sercom0, get_SERCOM0_Handler(), PIN_SERIAL1_RX, PIN_SERIAL1_TX, PAD_SERIAL1_RX, PAD_SERIAL1_TX);
 
 
 // With coroutines, it's often more natural to set something
@@ -110,7 +110,7 @@ void output_dmx_frame();
 void get_dmx_frame();
 uint8_t start_code;
 uint8_t dmx_frame[512];
-GC_Uart::Error serial_error;
+GC::Uart::Error serial_error;
 
 
 GC::Coroutine dmx_task([]
@@ -135,7 +135,7 @@ GC::Coroutine dmx_task([]
     get_dmx_frame();
     yield();
 
-    if( serial_error & GC_Uart::FRAME_ERROR )
+    if( serial_error & GC::Uart::FRAME_ERROR )
     {
       digitalWrite(RED_LED_PIN, HIGH);
 #ifdef LEVELS_TO_SSD1306

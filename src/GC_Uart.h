@@ -1,10 +1,10 @@
 /**
- * GC_Uart.h 
+ * Uart.h 
  * gadget-coroutines
  * Stacked coroutines for the Arduino environment.
  * (C) 2020 John Graley; BSD license applies.
  * 
- * Variaitons on Uart.h for coroutines
+ * Variaitons on ::Uart.h for coroutines
  */
 #ifndef GC_Uart_h
 #define GC_Uart_h
@@ -15,7 +15,10 @@
 
 #include "Coroutine.h"
 
-class GC_Uart : public Uart
+namespace GC
+{
+
+class Uart : public ::Uart
 {
 public:  
   enum Error
@@ -24,8 +27,8 @@ public:
       FRAME_ERROR = 0x0001
   };
 
-  GC_Uart(SERCOM *_s, void (**_vector)(), uint8_t _pinRX, uint8_t _pinTX, SercomRXPad _padRX, SercomUartTXPad _padTX);
-  GC_Uart(SERCOM *_s, void (**_vector)(), uint8_t _pinRX, uint8_t _pinTX, SercomRXPad _padRX, SercomUartTXPad _padTX, uint8_t _pinRTS, uint8_t _pinCTS);
+  Uart(SERCOM *_s, void (**_vector)(), uint8_t _pinRX, uint8_t _pinTX, SercomRXPad _padRX, SercomUartTXPad _padTX);
+  Uart(SERCOM *_s, void (**_vector)(), uint8_t _pinRX, uint8_t _pinTX, SercomRXPad _padRX, SercomUartTXPad _padTX, uint8_t _pinRTS, uint8_t _pinCTS);
   
   void begin(unsigned long baudRate);
   void begin(unsigned long baudrate, uint16_t config);
@@ -37,5 +40,7 @@ private:
   SERCOM *sercom;
   void (**vector)();
 };
+
+} // namespace
 
 #endif
