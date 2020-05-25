@@ -35,15 +35,13 @@ extern  "C" void __attribute__((used)) yield(void)
   Coroutine::yield();
 }
 
-
+// This does what the system yield does if you don't over-ride it.
 extern void system_idle_tasks()
 {
 #if defined(USE_TINYUSB)
   tud_task();
   tud_cdc_write_flush();
 #endif
-
-  Coroutine::yield();
 }
 
 

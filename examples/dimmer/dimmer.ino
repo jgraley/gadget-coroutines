@@ -301,7 +301,7 @@ void loop()
     dmx_task();
   }
   system_idle_tasks();
-#ifdef SSD1306_EXAMPLE_AS_SUBPROGRAM
-  display_subprogram();
+#ifdef SSD1306_EXAMPLE_AS_SUBSKETCH
+  display_subsketch();
 #endif
 }
