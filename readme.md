@@ -12,7 +12,8 @@ _Stacked coroutines for the Arduino environment._
  - **Hopping**: coroutines may be invoked from interrupt service 
    routines. This enables a coroutine to respond rapidly to events.
  - **CLS**: coroutine-local storage is supported via gcc's `__thread`. 
- - **SuperFunctor**: coroutines can be invoked as C-style call-backs. 
+ - **SuperFunctor**: coroutines can be invoked like C-style call-backs. 
+ - **SubSketch**: run more than one Arduino sketch simultaneously.
 
 ## What platforms are supported?
  - Only tested on **AdaFruit Trinket M0**, which is based on **Atmel 
