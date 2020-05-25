@@ -1,7 +1,8 @@
 /**
  * SubSketch.h 
- * Created by John Graley, 2020.
- * (C) John Graley LGPL license applies.
+ * gadget-coroutines
+ * Stacked coroutines for the Arduino environment.
+ * (C) 2020 John Graley; BSD license applies.
  * 
  * Support for running a whole sketch inside another
  */

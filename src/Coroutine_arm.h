@@ -1,8 +1,11 @@
-/*
-  Coroutine_arm.h - Coroutines for Gadgets.
-  Created by John Graley, 2020.
-  (C) John Graley LGPL license applies.
-*/
+/**
+ * Coroutine_arm.h
+ * gadget-coroutines
+ * Stacked coroutines for the Arduino environment.
+ * (C) 2020 John Graley; BSD license applies.
+ * 
+ * Arm-specifics for Coroutine class.
+ */
 #ifndef Coroutine_arm_h
 #define Coroutine_arm_h
 

@@ -1,9 +1,8 @@
 /**
- * Integration.cpp - Coroutines for Gadgets.
- * Created by John Graley, 2020.
- * (C) John Graley LGPL license applies.
- * 
- * Here, we integrate Gadget Coroutines into the Arduino environment.
+ * Integration.cpp
+ * gadget-coroutines
+ * Stacked coroutines for the Arduino environment.
+ * (C) 2020 John Graley; BSD license applies.
  */
 
 #include "Coroutine.h"

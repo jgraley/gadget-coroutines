@@ -1,5 +1,15 @@
-#ifndef SUPERFUNCTOR_H
-#define SUPERFUNCTOR_H
+/**
+ * SuperFunctor.cpp
+ * gadget-coroutines
+ * Stacked coroutines for the Arduino environment.
+ * (C) 2020 John Graley; BSD license applies.
+ * 
+ * Permit a functor object to be invoked via C
+ * function pointer.
+ */
+
+#ifndef SuperFunctor_h
+#define SuperFunctor_h
 
 #include <utility>
 #include <cstddef>

@@ -1,3 +1,12 @@
+/**
+ * dimmer.ino
+ * gadget-coroutines
+ * Stacked coroutines for the Arduino environment.
+ * (C) 2020 John Graley; BSD license applies.
+ * 
+ * Example: DMX receiver with DotStar and SSD1306 display
+ */
+
 #define LEVELS_TO_SSD1306
 #define LEVELS_TO_DOTSTAR
 //#define STACK_USAGE_TO_SERIAL

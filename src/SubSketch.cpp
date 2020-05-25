@@ -1,7 +1,8 @@
 /**
- * SubSketch.cpp - Coroutines for Gadgets.
- * Created by John Graley, 2020.
- * (C) John Graley LGPL license applies.
+ * SubSketch.cpp
+ * gadget-coroutines
+ * Stacked coroutines for the Arduino environment.
+ * (C) 2020 John Graley; BSD license applies.
  */
 
 #include "SubSketch.h"

@@ -1,3 +1,11 @@
+/**
+ * SuperFunctor.cpp
+ * gadget-coroutines
+ * Stacked coroutines for the Arduino environment.
+ * (C) 2020 John Graley; BSD license applies.
+ * 
+ * Arm-specifics for SuperFunctor class.
+ */
 #ifndef SUPERFUNCTOR_ARM_H
 #define SUPERFUNCTOR_ARM_H
 
