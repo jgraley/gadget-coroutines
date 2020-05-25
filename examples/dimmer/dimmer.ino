@@ -7,7 +7,7 @@
  * Example: DMX receiver with DotStar and SSD1306 display
  */
 
-//#define LEVELS_TO_SSD1306
+#define LEVELS_TO_SSD1306
 #define LEVELS_TO_DOTSTAR
 //#define STACK_USAGE_TO_SERIAL
 //#define SSD1306_EXAMPLE_AS_SUBSKETCH
@@ -19,7 +19,7 @@
 #include "Coroutine.h"
 #include "Hopper.h"
 #include "wiring_private.h"
-#include "Uart.h"
+#include "GC_Uart.h"
 
 
 #ifdef SSD1306_EXAMPLE_AS_SUBSKETCH
@@ -78,40 +78,14 @@ void display_bad_frame();
 
 volatile bool enable_fg = true;
 
-SERCOM *dmx_sercom = &sercom0;
-// Note: we are coding direct to the SERCOM API since we want to implement the ISR ourselves
-
+// Similar to what we get at the bottom of variant.cpp (for your platform), 
+// Except that:
+// 1. We use the INTERRUPT_HANDLER to generate an interrupt handler.
+// 2. This interrupt handler forwards throuh a vector that is non_const.
+// 3. Name of vector is just handler name with _ptr appended.
+// 4. We construct a GC_Uart instead of a Uart, and pass in the vector.
 INTERRUPT_HANDLER(SERCOM0_Handler)
-
-volatile bool frame_error = false;
-
-void handle_UART_error()
-{
-  dmx_sercom->acknowledgeUARTError();
-  if (dmx_sercom->isFrameErrorUART()) {
-    // frame error, next byte is invalid so read and discard it
-    dmx_sercom->readDataUART();
-    frame_error = true;
-
-    dmx_sercom->clearFrameErrorUART();
-  }  
-  // TODO: if (sercom->isBufferOverflowErrorUART()) ....
-  // TODO: if (sercom->isParityErrorUART()) ....
-  dmx_sercom->clearStatusUART();
-}
-
-uint8_t read_byte_from_uart()
-{
-  GC::Coroutine::wait( []{ return dmx_sercom->isUARTError() || dmx_sercom->availableDataUART(); } );
-
-  if(dmx_sercom->isUARTError())
-  {
-    handle_UART_error();  
-    return 0;
-  }
-  
-  return dmx_sercom->readDataUART();
-}
+GC_Uart Serial1(&sercom0, &SERCOM0_Handler_ptr, PIN_SERIAL1_RX, PIN_SERIAL1_TX, PAD_SERIAL1_RX, PAD_SERIAL1_TX);
 
 
 // With coroutines, it's often more natural to set something
@@ -135,6 +109,7 @@ void output_dmx_frame();
 void get_dmx_frame();
 uint8_t start_code;
 uint8_t dmx_frame[512];
+GC_Uart::Error serial_error;
 
 
 GC::Coroutine dmx_task([]
@@ -159,7 +134,7 @@ GC::Coroutine dmx_task([]
     get_dmx_frame();
     yield();
 
-    if( frame_error )
+    if( serial_error & GC_Uart::FRAME_ERROR )
     {
       digitalWrite(RED_LED_PIN, HIGH);
 #ifdef LEVELS_TO_SSD1306
@@ -204,23 +179,19 @@ void wait_for_break_pulse()
 void get_frame_data()
 {
   // "Hop" across to UART interrupt
-  GC::Hopper hopper( []{ Attach_SERCOM0_Handler(*me());
-                         Serial1.begin(250000, SERIAL_8N2); }, 
-                     []{ Serial1.end(); 
-                         Detach_SERCOM0_Handler();
-  } ); 
+  GC::Hopper hopper( []{ Serial1.begin(250000, SERIAL_8N2); }, 
+                     []{ Serial1.end(); } ); 
 
-  frame_error = false;
-  start_code = read_byte_from_uart();
-  if( frame_error )
+  start_code = Serial1.read(&serial_error);
+  if( serial_error )
     return;
   if( start_code != 0 )
     return;
   
   for( int i=0; i<(int)sizeof(dmx_frame); i++ )
   {
-    dmx_frame[i] = read_byte_from_uart();
-    if( frame_error )
+    dmx_frame[i] = Serial1.read(&serial_error);
+    if( serial_error )
       return;
   }
 }
