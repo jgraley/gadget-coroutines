@@ -261,3 +261,11 @@ void *Coroutine::get_cls_address(void *obj)
 
 int Coroutine::cls_heap_top = 0;
 byte *Coroutine::cls_foreground_heap = 0;
+
+
+// This makes sure the TR is a NULL pointer for the foreground
+// context (i.e. when outside any coroutine)
+void __attribute__ ((constructor)) init_baseline_tr()
+{
+  set_tr( nullptr );
+}

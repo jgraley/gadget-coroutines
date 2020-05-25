@@ -19,14 +19,6 @@ using namespace std;
 using namespace GC;
 using namespace Arm;
 
-// This makes sure the TR is a NULL pointer for the foreground
-// context (i.e. when outside any coroutine)
-void __attribute__ ((constructor)) init_baseline_tr()
-{
-  set_tr( nullptr );
-}
-
-
 // Implement Arduino yield operation (called by eg delay()) to yield any 
 // coroutine that might be running. This makes functions like delay() 
 // become seemingly coroutine-aware.
