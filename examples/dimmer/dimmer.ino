@@ -7,7 +7,7 @@
  * Example: DMX receiver with DotStar and SSD1306 display
  */
 
-#define LEVELS_TO_SSD1306
+//#define LEVELS_TO_SSD1306
 #define LEVELS_TO_DOTSTAR
 //#define STACK_USAGE_TO_SERIAL
 //#define SSD1306_EXAMPLE_AS_SUBSKETCH
@@ -86,7 +86,7 @@ volatile bool enable_fg = true;
 // 4. We construct a GC_Uart instead of a Uart, and pass in the vector.
 // 5. You'll have to comment out ISR and Uart declrations in variant.h/cpp
 INTERRUPT_HANDLER(SERCOM0_Handler)
-GC_Uart Serial1(&sercom0, &SERCOM0_Handler_ptr, PIN_SERIAL1_RX, PIN_SERIAL1_TX, PAD_SERIAL1_RX, PAD_SERIAL1_TX);
+GC_Uart Serial1(&sercom0, get_SERCOM0_Handler(), PIN_SERIAL1_RX, PIN_SERIAL1_TX, PAD_SERIAL1_RX, PAD_SERIAL1_TX);
 
 
 // With coroutines, it's often more natural to set something

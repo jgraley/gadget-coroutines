@@ -52,8 +52,8 @@ GC::Coroutine led_flasher_task([]()
     if( random(2) )
     {
       // "Hop" on to the interrupt
-      GC::Hopper hopper( []{ Attach_TC3_Handler(*me()); NVIC_EnableIRQ(TC3_IRQn); },
-                         []{ NVIC_DisableIRQ(TC3_IRQn); Detach_TC3_Handler(); } );      
+      GC::Hopper hopper( []{ *get_TC3_Handler() = *me(); NVIC_EnableIRQ(TC3_IRQn); },
+                         []{ NVIC_DisableIRQ(TC3_IRQn); *get_TC3_Handler() = nullptr; } );      
       yield(); // when this returns we're in ISR 
       TC->INTFLAG.bit.MC0 = 1; // Ack the interrupt
       

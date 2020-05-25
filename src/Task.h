@@ -59,22 +59,19 @@ void Task::set_hop_lambda( std::function<void()> hop )
 
 // NOTE: if super functors are disabled, we should be able to change the 
 // implementation here to use `Task &` and `Task *` directly.
-#define INTERRUPT_HANDLER_IMPL(ISR_NAME, PTR, ATTACH, DETACH) \
+#define INTERRUPT_HANDLER_IMPL(ISR_NAME, PTR, GET) \
 void (*ISR_NAME##PTR)() = nullptr; \
 void ISR_NAME() \
 { \
   if( ISR_NAME##PTR ) \
     ISR_NAME##PTR(); \
 } \
-void ATTACH##ISR_NAME(void (*handler)()) \
+void (**GET##ISR_NAME())() \
 { \
-    ISR_NAME##PTR = handler; \
+  return &ISR_NAME##PTR; \
 } \
-void DETACH##ISR_NAME() \
-{ \
-    ISR_NAME##PTR = nullptr; \
-}
 
-#define INTERRUPT_HANDLER(ISR_NAME) INTERRUPT_HANDLER_IMPL(ISR_NAME, _ptr, Attach_, Detach_)
+
+#define INTERRUPT_HANDLER(ISR_NAME) INTERRUPT_HANDLER_IMPL(ISR_NAME, _ptr, get_)
 
 #endif
