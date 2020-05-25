@@ -1,8 +1,17 @@
-#define DOTSTAR
+/**
+ * hopping.ino
+ * gadget-coroutines
+ * Stacked coroutines for the Arduino environment.
+ * (C) 2020 John Graley; BSD license applies.
+ * 
+ * Example: Flashing LEDs with hopping onto Timer ISR
+ */
+ 
+#define USE_DOTSTAR
 
 #include "Coroutine.h"
 #include "Hopper.h"
-#ifdef DOTSTAR
+#ifdef USE_DOTSTAR
 #include <Adafruit_DotStar.h>
 
 #define DOTSTAR_NUMPIXELS 1 
@@ -32,7 +41,7 @@ GC::Coroutine led_flasher_task([]()
   GC::Hopper fg( []{ enable_fg=true; },
                  []{ enable_fg=false; } );                             
 
-#ifdef DOTSTAR
+#ifdef USE_DOTSTAR
   strip.begin(); // Initialize pins for output
   strip.show();  // Turn all LEDs off ASAP
 #endif
@@ -49,7 +58,7 @@ GC::Coroutine led_flasher_task([]()
       TC->INTFLAG.bit.MC0 = 1; // Ack the interrupt
       
       // Emit a flash "on" the interrupt
-#ifdef DOTSTAR
+#ifdef USE_DOTSTAR
       strip.setPixelColor(0, 10<<8);
       strip.show();
 #else
@@ -59,7 +68,7 @@ GC::Coroutine led_flasher_task([]()
       yield(); // await next interrupt
       TC->INTFLAG.bit.MC0 = 1; // Ack the interrupt
   
-#ifdef DOTSTAR
+#ifdef USE_DOTSTAR
       strip.setPixelColor(0, 0);
       strip.show();
 #else

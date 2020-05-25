@@ -1,8 +1,16 @@
-#define DOTSTAR
+/**
+ * flashing.ino
+ * gadget-coroutines
+ * Stacked coroutines for the Arduino environment.
+ * (C) 2020 John Graley; BSD license applies.
+ * 
+ * Example: flashing LEDs using foreground coroutines
+ */
+#define USE_DOTSTAR
 
 #include "Coroutine.h"
 
-#ifdef DOTSTAR
+#ifdef USE_DOTSTAR
 #include <Adafruit_DotStar.h>
 
 #define DOTSTAR_NUMPIXELS 1 
@@ -33,7 +41,7 @@ GC::Coroutine led_flasher_task([]()
 }); 
 
 
-#ifdef DOTSTAR
+#ifdef USE_DOTSTAR
 GC::Coroutine dotstar_flasher_task([]()
 {
   strip.begin(); // Initialize pins for output
@@ -70,7 +78,7 @@ void loop() {
   tls_var += 7;
   //TRACE("tls_var outside %p global %p local %p", &tls_var, &global_var, &local_var);
   led_flasher_task();
-#ifdef DOTSTAR
+#ifdef USE_DOTSTAR
   dotstar_flasher_task();
 #endif  
   system_idle_tasks();
