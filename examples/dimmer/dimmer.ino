@@ -16,6 +16,12 @@
 #error Must choose one usage for SSD1306 display driver
 #endif
 
+#include "Coroutine.h"
+#include "Hopper.h"
+#include "wiring_private.h"
+#include "Uart.h"
+
+
 #ifdef SSD1306_EXAMPLE_AS_SUBSKETCH
 // With no functional changes, I was able to get the example program from the SSD1306 
 // display libaray to run in a coroutine very easily. The example program, ssd1306_128x32_i2c.ino
@@ -38,10 +44,6 @@ namespace display_subsketch
 // See SubSketch.h for info about this
 GC_SUB_SKETCH_TASK(display_subsketch) display_subsketch_task;
 #endif
-
-#include "Coroutine.h"
-#include "Hopper.h"
-#include "wiring_private.h"
 
 #ifdef LEVELS_TO_SSD1306
 #include <Wire.h>
@@ -81,28 +83,6 @@ SERCOM *dmx_sercom = &sercom0;
 
 INTERRUPT_HANDLER(SERCOM0_Handler)
 
-void dmx_uart_init()
-{
-  // PIN_SERIAL1_RX, PIN_SERIAL1_TX, PAD_SERIAL1_RX, PAD_SERIAL1_TX, NO_RTS_PIN, NO_CTS_PIN
-  dmx_sercom->initUART(UART_INT_CLOCK, SAMPLE_RATE_x16, DMX_BAUDRATE);
-  dmx_sercom->initFrame(UART_CHAR_SIZE_8_BITS, LSB_FIRST, SERCOM_NO_PARITY, SERCOM_STOP_BITS_2);
-  dmx_sercom->initPads(PAD_SERIAL1_TX, PAD_SERIAL1_RX);
-
-  dmx_sercom->enableUART();
-}
-
-void dmx_uart_shutdown()
-{
-  dmx_sercom->resetUART();
-}
-
-void dmx_uart_claim_pins()
-{
-  // PIN_SERIAL1_RX, PIN_SERIAL1_TX, PAD_SERIAL1_RX, PAD_SERIAL1_TX, NO_RTS_PIN, NO_CTS_PIN
-  pinPeripheral(PIN_SERIAL1_RX, g_APinDescription[PIN_SERIAL1_RX].ulPinType);
-  pinPeripheral(PIN_SERIAL1_TX, g_APinDescription[PIN_SERIAL1_TX].ulPinType);
-}
-
 volatile bool frame_error = false;
 
 void handle_UART_error()
@@ -134,6 +114,8 @@ uint8_t read_byte_from_uart()
 }
 
 
+// With coroutines, it's often more natural to set something
+// up just before you need it.
 void setup() 
 {  
 }  
@@ -222,11 +204,16 @@ void wait_for_break_pulse()
 void get_frame_data()
 {
   // "Hop" across to UART interrupt
-  GC::Hopper hopper( []{ dmx_uart_claim_pins();
-                         dmx_uart_init();
-                         Attach_SERCOM0_Handler(*me());}, 
-                     []{ dmx_uart_shutdown();
-                         Detach_SERCOM0_Handler();} ); 
+  GC::Hopper hopper( []
+  { 
+    Serial1.begin(250000, SERIAL_8N2);
+    Attach_SERCOM0_Handler(*me());
+  }, 
+  []
+  { 
+    Serial1.end(); 
+    Detach_SERCOM0_Handler();
+  } ); 
 
   frame_error = false;
   start_code = read_byte_from_uart();
