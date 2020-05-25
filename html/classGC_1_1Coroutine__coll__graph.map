@@ -1,0 +1,4 @@
+<map id="GC::Coroutine" name="GC::Coroutine">
+<area shape="rect" id="node2" href="$classGC_1_1Task.html" title="{GC::Task\n||+ Task()\l+ ~Task()\l+ operator()()\l+ set_hop_lambda()\l# check_valid_this()\l# run_iteration()\l}" alt="" coords="27,175,166,325"/>
+<area shape="rect" id="node3" href="$classGC_1_1SuperFunctor.html" title="{GC::SuperFunctor\n||+ SuperFunctor()\l+ ~SuperFunctor()\l+ operator EntryPointFP()\l# operator()()\l}" alt="" coords="11,5,182,127"/>
+</map>

@@ -1,0 +1,4 @@
+<map id="GC::Task" name="GC::Task">
+<area shape="rect" id="node3" href="$classGC_1_1Coroutine.html" title="{GC::Coroutine\n||+ Coroutine()\l+ ~Coroutine()\l+ set_hop_lambda()\l+ get_child_stack_bounds()\l+ estimate_stack_peak\l_usage()\l+ get_cls_usage()\l+ me()\l+ yield()\l+ wait()\l}" alt="" coords="5,373,188,583"/>
+<area shape="rect" id="node2" href="$classGC_1_1SuperFunctor.html" title="{GC::SuperFunctor\n||+ SuperFunctor()\l+ ~SuperFunctor()\l+ operator EntryPointFP()\l# operator()()\l}" alt="" coords="11,5,182,127"/>
+</map>
