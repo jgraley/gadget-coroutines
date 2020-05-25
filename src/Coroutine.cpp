@@ -9,7 +9,7 @@
 #include "Coroutine_arm.h"
 #include "Tracing.h"
 #include "Integration.h"
-#include "RAII_CLS.h"
+#include "RAII_TR.h"
 
 #include <cstring>
 #include <functional>
@@ -87,7 +87,7 @@ void Coroutine::set_hop_lambda( std::function<void()> hop )
 {
   Task::set_hop_lambda( [=]
   {
-    RAII_CLS raii_cls(this);
+    RAII_TR tr(this);
     hop();
   } );
 }
@@ -101,16 +101,16 @@ pair<const byte *, const byte *> Coroutine::get_child_stack_bounds()
 
 int Coroutine::estimate_stack_peak_usage()
 {
-    byte *p = child_stack_memory + tls_top;
+    byte *p = child_stack_memory + cls_heap_top;
     while( *p==0 && p < child_stack_memory+stack_size )
       p++;
     return child_stack_memory+stack_size-p;      
 }
 
 
-int Coroutine::get_tls_usage()
+int Coroutine::get_cls_usage()
 {
-    return tls_top;
+    return cls_heap_top;
 }
 
 
@@ -131,7 +131,7 @@ byte *Coroutine::prepare_child_stack( byte *frame_end, byte *stack_pointer )
 void Coroutine::prepare_child_jmp_buf( jmp_buf &child_jmp_buf, const jmp_buf &initial_jmp_buf, byte *parent_stack_pointer, byte *child_stack_pointer )
 {
   // Prepare a jump buffer for the child and point it to the new stack
-  CONSTRUCTOR_TRACE("initial jmp_buf has cls=%08x sl=%08x fp=%08x sp=%08x lr=%08x", 
+  CONSTRUCTOR_TRACE("initial jmp_buf has tr=%08x sl=%08x fp=%08x sp=%08x lr=%08x", 
       initial_jmp_buf[5], initial_jmp_buf[6], initial_jmp_buf[7], 
       initial_jmp_buf[8], initial_jmp_buf[9] );
   byte *parent_frame_pointer = (byte *)(get_jmp_buf_fp(initial_jmp_buf));
@@ -228,7 +228,7 @@ void Coroutine::jump_to_parent()
 
 
 extern void *__HeapLimit;
-void *Coroutine::get_tls_pointer(void *obj)
+void *Coroutine::get_cls_address(void *obj)
 {
     __emutls_object * const euo = (__emutls_object *)obj;   
     const Coroutine *me = ::me();
@@ -236,29 +236,29 @@ void *Coroutine::get_tls_pointer(void *obj)
     {
       // The first time a TLS item is accessed, regardless of context, we
       // give it an offset.  
-      if( tls_top==0 )
-        tls_top++; // If we put 0 into euo.loc.offset, it will be indistinguishable from nullptr
-      euo->loc.offset = (tls_top + euo->align - 1) & ~(euo->align - 1);
-      tls_top = euo->loc.offset + euo->size;
+      if( cls_heap_top==0 )
+        cls_heap_top++; // If we put 0 into euo.loc.offset, it will be indistinguishable from nullptr
+      euo->loc.offset = (cls_heap_top + euo->align - 1) & ~(euo->align - 1);
+      cls_heap_top = euo->loc.offset + euo->size;
     }
     
-    byte *tls_heap;
+    byte *cls_heap;
     if( me )
     {
       // TLS data accessed in a coroutine  
-      tls_heap = me->child_stack_memory;
+      cls_heap = me->child_stack_memory;
     }
     else
     {
       // TLS data accessed outside of any coroutine
       // The first time this happens, we'll have to allocate a block of memory
-      if( !tls_outside_heap )
-        tls_outside_heap = (byte *)calloc(default_stack_size, 1);
-      tls_heap = tls_outside_heap;
+      if( !cls_foreground_heap )
+        cls_foreground_heap = (byte *)calloc(default_stack_size, 1);
+      cls_heap = cls_foreground_heap;
     }
-    return tls_heap + euo->loc.offset;
+    return cls_heap + euo->loc.offset;
 }
 
 
-int Coroutine::tls_top = 0;
-byte *Coroutine::tls_outside_heap = 0;
+int Coroutine::cls_heap_top = 0;
+byte *Coroutine::cls_foreground_heap = 0;

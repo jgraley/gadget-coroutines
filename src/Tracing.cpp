@@ -19,11 +19,11 @@ using namespace Arm;
 
 void _gcoroutines_log(const char *message)
 {
-  void *cls = get_tr();
+  void *tr = get_tr();
   set_tr(nullptr);
   Serial.println(message); 
   delay(100);
-  set_tr(cls);
+  set_tr(tr);
 }
 
 

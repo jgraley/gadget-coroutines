@@ -53,9 +53,9 @@ inline void *get_jmp_buf_tr( const jmp_buf &env )
   return reinterpret_cast<void *>( env[JMPBUF_INDEX_TR] );
 }
 
-inline void set_jmp_buf_tr( jmp_buf &env, void *new_cls )
+inline void set_jmp_buf_tr( jmp_buf &env, void *new_tr )
 {
-  env[JMPBUF_INDEX_TR] = reinterpret_cast<int>(new_cls);
+  env[JMPBUF_INDEX_TR] = reinterpret_cast<int>(new_tr);
 }
 
 inline void *get_jmp_buf_fp( const jmp_buf &env )
@@ -76,14 +76,14 @@ inline void copy_jmp_buf( jmp_buf &dest, const jmp_buf &src )
 
 inline void *get_tr()
 {
-    void *cls;
-    asm( "mov %[result], r9" : [result] "=r" (cls) : : );
-    return cls;
+    void *tr;
+    asm( "mov %[result], r9" : [result] "=r" (tr) : : );
+    return tr;
 }
 
-inline void set_tr( void *cls )
+inline void set_tr( void *tr )
 {
-    asm( "mov r9, %[value]" : : [value] "r" (cls) : );
+    asm( "mov r9, %[value]" : : [value] "r" (tr) : );
 }
 
 inline void *get_sp()

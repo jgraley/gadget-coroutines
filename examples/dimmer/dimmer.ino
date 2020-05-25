@@ -234,7 +234,7 @@ void display_levels()
   sprintf(buf, "%02X%02X%02X %3d", dmx_frame[0], dmx_frame[1], dmx_frame[2], dmx_frame[3]);
   display.println(buf);
 #ifdef STACK_USAGE
-  sprintf(buf, "T%d S%d", me()->get_tls_usage(), me()->estimate_stack_peak_usage());
+  sprintf(buf, "C%d S%d", me()->get_cls_usage(), me()->estimate_stack_peak_usage());
   display.println(buf);
 #endif  
   display.display(); 
@@ -253,7 +253,7 @@ void display_bad_frame()
   sprintf(buf, "Frame Err!");
   display.println(buf);
 #ifdef STACK_USAGE
-  sprintf(buf, "T%d S%d", me()->get_tls_usage(), me()->estimate_stack_peak_usage());
+  sprintf(buf, "C%d S%d", me()->get_cls_usage(), me()->estimate_stack_peak_usage());
   display.println(buf);
 #endif  
   display.display(); 
