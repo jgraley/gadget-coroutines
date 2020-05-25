@@ -84,6 +84,7 @@ volatile bool enable_fg = true;
 // 2. This interrupt handler forwards throuh a vector that is non_const.
 // 3. Name of vector is just handler name with _ptr appended.
 // 4. We construct a GC_Uart instead of a Uart, and pass in the vector.
+// 5. You'll have to comment out ISR and Uart declrations in variant.h/cpp
 INTERRUPT_HANDLER(SERCOM0_Handler)
 GC_Uart Serial1(&sercom0, &SERCOM0_Handler_ptr, PIN_SERIAL1_RX, PIN_SERIAL1_TX, PAD_SERIAL1_RX, PAD_SERIAL1_TX);
 

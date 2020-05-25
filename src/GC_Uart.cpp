@@ -50,14 +50,15 @@ void GC_Uart::end()
 }
 
 
-int GC_Uart::read( Error *error )
+int GC_Uart::read( Error *error_p )
 {
-  *error = NO_ERROR;
+  if( error_p )
+    *error_p = NO_ERROR;
   Coroutine::wait( [=]{ return sercom->isUARTError() || sercom->availableDataUART(); } );
 
   if(sercom->isUARTError())
   {
-    handle_UART_error(error);  
+    handle_UART_error(error_p);  
     return 0;
   }
   
@@ -65,13 +66,14 @@ int GC_Uart::read( Error *error )
 }
 
 
-void GC_Uart::handle_UART_error( Error *error )
+void GC_Uart::handle_UART_error( Error *error_p )
 {
   sercom->acknowledgeUARTError();
   if (sercom->isFrameErrorUART()) {
     // frame error, next byte is invalid so read and discard it
     sercom->readDataUART();
-    *error = FRAME_ERROR;
+    if( error_p )
+      *error_p = FRAME_ERROR;
 
     sercom->clearFrameErrorUART();
   }  

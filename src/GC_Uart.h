@@ -30,7 +30,7 @@ public:
   void begin(unsigned long baudRate);
   void begin(unsigned long baudrate, uint16_t config);
   void end();  
-  int read( Error *error );
+  int read( Error *error_p = nullptr );
   
 private:
   void handle_UART_error( Error *error );
