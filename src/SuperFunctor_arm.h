@@ -29,11 +29,11 @@ inline void *get_vcall_destination(uint32_t *mfp_words, uint32_t *this_words)
     }        
 }
 
-// Only thumb-mode thunk has been tested
+// Only thumb-mode trampoline has been tested
 static_assert( __thumb__==1 );
-#define THUNK_FOR_THUMB 1
+#define TRAMPOLINE_THUMB 1
 
-#ifdef THUNK_FOR_THUMB
+#ifdef TRAMPOLINE_THUMB
 typedef uint16_t MachineInstruction;
 #else
 typedef uint32_t MachineInstruction;
@@ -42,14 +42,14 @@ typedef uint32_t MachineInstruction;
 inline void *ptr_to_function_ptr( MachineInstruction *ptr )
 {
     auto ptr_word = (uint32_t)ptr;
-#ifdef THUNK_FOR_THUMB
+#ifdef TRAMPOLINE_THUMB
     ptr_word |= 1; // set the "thumb" bit to make a function pointer
 #endif
     return (void *)ptr_word;
 }
 
-#define SUPER_FUNCTOR_THUNK_ASSEMBLY_SIZE 4
-#define SUPER_FUNCTOR_THUNK_ASSEMBLY \
+#define SUPER_FUNCTOR_TRAMPOLINE_SIZE 4
+#define SUPER_FUNCTOR_TRAMPOLINE \
     "mov r0, pc\n\t" /* Get PC */ \
     "sub r0, %[this_to_PC_offset]\n\t" /* Calculate "this" pointer into r0 */ \
     "ldr r1, [r0, %[this_to_entrypoint_offset]]\n\t" /* Get entrypoint function pointer */ \

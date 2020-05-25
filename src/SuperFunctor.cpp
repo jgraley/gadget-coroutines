@@ -11,10 +11,10 @@ SuperFunctor::SuperFunctor() :
     entrypoint_fpt(nullptr)
 {
     const pair<MachineInstruction *, int> assembly = GetAssembly();
-    ASSERT( assembly.second <= SUPER_FUNCTOR_THUNK_ASSEMBLY_SIZE, "Thunk assemebly too long" );
-    memcpy( entrypoint_thunk, assembly.first, assembly.second * sizeof(MachineInstruction) );     
-    __builtin___clear_cache(entrypoint_thunk, entrypoint_thunk+sizeof(entrypoint_thunk)); // We've written some code into memory
-    //TRACE("thunk at %p %x %x %x %x", entrypoint_thunk, entrypoint_thunk[0], entrypoint_thunk[1], entrypoint_thunk[2], entrypoint_thunk[3]);
+    ASSERT( assembly.second <= SUPER_FUNCTOR_TRAMPOLINE_SIZE, "Thunk assemebly too long" );
+    memcpy( entrypoint_trampoline, assembly.first, assembly.second * sizeof(MachineInstruction) );     
+    __builtin___clear_cache(entrypoint_trampoline, entrypoint_trampoline+sizeof(entrypoint_trampoline)); // We've written some code into memory
+    //TRACE("trampoline at %p %x %x %x %x", entrypoint_trampoline, entrypoint_trampoline[0], entrypoint_trampoline[1], entrypoint_trampoline[2], entrypoint_trampoline[3]);
 }
 
 
@@ -36,8 +36,8 @@ SuperFunctor::operator EntryPointFP()
         entrypoint_fpt = (EntryPointFPT)get_vcall_destination( mfp_words.data(), this_words );
     }
     
-    // Convert the address of the thunk to a function pointer
-    return (EntryPointFP)ptr_to_function_ptr(entrypoint_thunk);
+    // Convert the address of the trampoline to a function pointer
+    return (EntryPointFP)ptr_to_function_ptr(entrypoint_trampoline);
 }
 
 
@@ -49,8 +49,8 @@ pair<MachineInstruction *, int> SuperFunctor::GetAssembly()
     if( actually_run_it )
     {
         BEGIN:
-        asm( SUPER_FUNCTOR_THUNK_ASSEMBLY
-              : : [this_to_PC_offset] "I" (offsetof(SuperFunctor, entrypoint_thunk) + pipeline_overshoot),
+        asm( SUPER_FUNCTOR_TRAMPOLINE
+              : : [this_to_PC_offset] "I" (offsetof(SuperFunctor, entrypoint_trampoline) + pipeline_overshoot),
                   [this_to_entrypoint_offset] "M" (offsetof(SuperFunctor, entrypoint_fpt)) : );            
         END:
             for(;;);
@@ -86,7 +86,7 @@ void SuperFunctor::TestMemberFunctionPointer()
     SuperFunctor s;
     //(s.*mfp)();
     TRACE("Thises: %p %p", &s, (SuperFunctor *)&s );
-    TRACE("entrypoint_thunk: %p", &(s.entrypoint_thunk) );
+    TRACE("entrypoint_trampoline: %p", &(s.entrypoint_trampoline) );
 
     /* What I learned:
      * - Size of MFP is 8 bytes: Updated:

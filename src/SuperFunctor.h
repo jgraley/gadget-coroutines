@@ -27,7 +27,7 @@ private:
     
   static std::pair<Arm::MachineInstruction *, int> GetAssembly();
 
-  Arm::MachineInstruction entrypoint_thunk[SUPER_FUNCTOR_THUNK_ASSEMBLY_SIZE];
+  Arm::MachineInstruction entrypoint_trampoline[SUPER_FUNCTOR_TRAMPOLINE_SIZE];
   EntryPointFPT entrypoint_fpt; 
 
 #ifdef SUPERFUNCTOR_TESTS  
