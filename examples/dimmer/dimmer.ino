@@ -7,7 +7,7 @@
  * Example: DMX receiver with DotStar and SSD1306 display
  */
 
-#define LEVELS_TO_SSD1306
+//#define LEVELS_TO_SSD1306
 #define LEVELS_TO_DOTSTAR
 //#define STACK_USAGE_TO_SERIAL
 //#define SSD1306_EXAMPLE_AS_SUBSKETCH
@@ -204,15 +204,10 @@ void wait_for_break_pulse()
 void get_frame_data()
 {
   // "Hop" across to UART interrupt
-  GC::Hopper hopper( []
-  { 
-    Serial1.begin(250000, SERIAL_8N2);
-    Attach_SERCOM0_Handler(*me());
-  }, 
-  []
-  { 
-    Serial1.end(); 
-    Detach_SERCOM0_Handler();
+  GC::Hopper hopper( []{ Attach_SERCOM0_Handler(*me());
+                         Serial1.begin(250000, SERIAL_8N2); }, 
+                     []{ Serial1.end(); 
+                         Detach_SERCOM0_Handler();
   } ); 
 
   frame_error = false;
