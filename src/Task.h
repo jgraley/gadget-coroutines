@@ -22,13 +22,58 @@
 namespace GC
 {
 
+/**
+ * Base class for tasks
+ * 
+ * We define a _task_ as a C++ object that can perform some useful work
+ * by being invoked repeatedly and performiong a small amount of work
+ * each time. The concept is already established in the Arduino 
+ * ecosystem via the `loop()` function, which a sketch implements to 
+ * perform a small amount of the task before returning, and will 
+ * continue on the next call.
+ * 
+ * A task object is a functor: it implements `operator()` as the way
+ * to invoke the task. This calls through to a protected pure virtual 
+ * function that must be over-ridden in a concrete implementation. The
+ * implementation should perform a small amount of work before 
+ * returning.
+ * 
+ * This class also provides support for hopping. A hop lambda may be  
+ * provided to the class and will be invoked exactly once, just before
+ * the next (or current) invocation returns, at a safe time.
+ * 
+ * The reason for a separate Task class is that schedulers and the like
+ * can work with `Task *`, rather than `Coroutine *` and will then be
+ * be usable with non-coroutine code as well as coroutine code.
+ */
 class Task : public SuperFunctor
 {
 public:
+  /**
+   * Create an instance
+   */ 
   Task();
+
+  /**
+   * Destroy an instance
+   */ 
   virtual ~Task() = default;
     
+  /**
+   * Functor entry point: invoke the task
+   */ 
   virtual void operator()();
+  
+  /**
+   * Give the task some code to be executed next time the functor returns.
+   * 
+   * Note that this code _is allowed_ to enable an interrupt whose
+   * ISR may then _re-enter_ the task's functor interface. This is 
+   * likely to happen when hopping from foreground to an interrupt that 
+   * is already pending. 
+   * 
+   * @param hop a lambda to be executed when the functor returns.
+   */  
   inline void set_hop_lambda( std::function<void()> hop );
   
 protected:

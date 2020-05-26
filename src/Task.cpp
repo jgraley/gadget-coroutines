@@ -31,7 +31,7 @@ void Task::operator()()
   hop_lambda = std::function<void()>(); // clear it
 
   // This will cause re-entry if a higher priority interrupt is enabled
-  // than whatever is runnig us now. It's OK as long as we leave it at 
+  // than whatever is running us now. It's OK as long as we leave it at 
   // bottom of the function.
   atomic_thread_fence(memory_order_release);
   local_hop_lambda();    
