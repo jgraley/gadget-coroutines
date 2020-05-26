@@ -9,7 +9,7 @@ _Stacked coroutines for the Arduino environment._
    continue, `delay()` or `yield()` will return.
  - **Stacked**: a coroutine can call ordinary functions, to any depth, 
    which can call `delay()` or `yield()`.
- - **Hopping**: coroutines may be invoked from interrupt service 
+ - **Hopping**: coroutines may be invoked within interrupt service 
    routines. This enables a coroutine to respond rapidly to events.
  - **CLS**: coroutine-local storage is supported via gcc's `__thread`. 
  - **SuperFunctor**: coroutines can be invoked like C-style call-backs. 

@@ -139,4 +139,10 @@ inline GC::Coroutine *me()
   return GC::Coroutine::me();
 }
 
+/** 
+ * \example flashing.ino
+ * \example hopping.ino
+ * \example dimmer.ino
+ */
+ 
 #endif
