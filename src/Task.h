@@ -1,5 +1,5 @@
 /**
- * Task.h
+ * @file Task.h
  * gadget-coroutines
  * Stacked coroutines for the Arduino environment.
  * (C) 2020 John Graley; BSD license applies.
@@ -23,7 +23,7 @@ namespace GC
 {
 
 /**
- * Base class for tasks
+ * Base class for tasks.
  * 
  * We define a _task_ as a C++ object that can perform some useful work
  * by being invoked repeatedly and performiong a small amount of work
@@ -50,17 +50,17 @@ class Task : public SuperFunctor
 {
 public:
   /**
-   * Create an instance
+   * Create an instance.
    */ 
   Task();
 
   /**
-   * Destroy an instance
+   * Destroy an instance.
    */ 
   virtual ~Task() = default;
     
   /**
-   * Functor entry point: invoke the task
+   * Functor entry point: invoke the task.
    */ 
   virtual void operator()();
   
@@ -70,7 +70,7 @@ public:
    * Note that this code _is allowed_ to enable an interrupt whose
    * ISR may then _re-enter_ the task's functor interface. This is 
    * likely to happen when hopping from foreground to an interrupt that 
-   * is already pending. 
+   * is already pending. `run_iteration()` will not be re-entered.
    * 
    * @param hop a lambda to be executed when the functor returns.
    */  
@@ -87,7 +87,6 @@ private:
   static const uint32_t MAGIC;
 };
 
-///-- 
 // Implement the inline functions here
 
 void Task::check_valid_this() const
@@ -114,9 +113,19 @@ void ISR_NAME() \
 void (**GET##ISR_NAME())() \
 { \
   return &ISR_NAME##PTR; \
-} \
+}
 
-
-#define INTERRUPT_HANDLER(ISR_NAME) INTERRUPT_HANDLER_IMPL(ISR_NAME, _ptr, get_)
+/**
+ * Declare a re-directable interrupt handler.
+ * 
+ * An interrupt handler function will be generated with the given name
+ * as well as a function named `get_ISRNAME()` that returns a pointer to 
+ * a RAM-based interrupt vector. This can be used to re-direct the 
+ * interrupt at run time.
+ * 
+ * @param ISR_NAME name of the interrupt to generate.
+ */
+#define INTERRUPT_HANDLER(ISR_NAME) \
+  INTERRUPT_HANDLER_IMPL(ISR_NAME, _ptr, get_)
 
 #endif
