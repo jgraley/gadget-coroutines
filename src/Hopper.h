@@ -1,10 +1,10 @@
 /**
- * Hopper.h 
- * gadget-coroutines
- * Stacked coroutines for the Arduino environment.
- * (C) 2020 John Graley; BSD license applies.
+ * @file Hopper.h 
+ * ### `gadget-coroutines`
+ * _Stacked coroutines for the Arduino environment._\n
+ * @copyright (C) 2020 John Graley; BSD license applies.
  * 
- * Support for hopping
+ * @brief Support for hopping
  */
 #ifndef Hopper_h
 #define Hopper_h

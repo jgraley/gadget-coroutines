@@ -1,10 +1,10 @@
 /**
- * Tracing.h
- * gadget-coroutines
- * Stacked coroutines for the Arduino environment.
- * (C) 2020 John Graley; BSD license applies.
+ * @file Tracing.h
+ * ### `gadget-coroutines`
+ * _Stacked coroutines for the Arduino environment._\n
+ * @copyright (C) 2020 John Graley; BSD license applies.
  *
- * Tracing macros
+ * @brief Tracing macros
  */
 
 #ifndef Tracing_h

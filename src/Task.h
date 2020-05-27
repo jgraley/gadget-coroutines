@@ -1,10 +1,10 @@
 /**
  * @file Task.h
- * gadget-coroutines
- * Stacked coroutines for the Arduino environment.
- * (C) 2020 John Graley; BSD license applies.
+ * ### `gadget-coroutines`
+ * _Stacked coroutines for the Arduino environment._\n
+ * @copyright @copyright (C) 2020 John Graley; BSD license applies.
  * 
- * Task interface class
+ * @brief Task base class and interrupt handler macro.
  */
 #ifndef Task_h
 #define Task_h
@@ -23,7 +23,7 @@ namespace GC
 {
 
 /**
- * Base class for tasks.
+ * @brief Base class for tasks.
  * 
  * We define a _task_ as a C++ object that can perform some useful work
  * by being invoked repeatedly and performiong a small amount of work
@@ -102,7 +102,7 @@ void Task::set_hop_lambda( std::function<void()> hop )
 } // namespace
 
 // NOTE: if super functors are disabled, we should be able to change the 
-// implementation here to use `Task &` and `Task *` directly.
+// implementation here to use `Task &` and `Task *` directly. #43
 #define INTERRUPT_HANDLER_IMPL(ISR_NAME, PTR, GET) \
 void (*ISR_NAME##PTR)() = nullptr; \
 void ISR_NAME() \
@@ -116,7 +116,7 @@ void (**GET##ISR_NAME())() \
 }
 
 /**
- * Declare a re-directable interrupt handler.
+ * @brief Declare a re-directable interrupt handler.
  * 
  * An interrupt handler function will be generated with the given name
  * as well as a function named `get_ISRNAME()` that returns a pointer to 

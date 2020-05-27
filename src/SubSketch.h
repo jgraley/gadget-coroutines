@@ -1,10 +1,10 @@
 /**
- * SubSketch.h 
- * gadget-coroutines
- * Stacked coroutines for the Arduino environment.
- * (C) 2020 John Graley; BSD license applies.
+ * @file SubSketch.h
+ * ### `gadget-coroutines`
+ * _Stacked coroutines for the Arduino environment._\n
+ * @copyright (C) 2020 John Graley; BSD license applies.
  * 
- * Support for running a whole sketch inside another
+ * @brief Support for running a whole sketch inside another
  */
 #ifndef SubSketch_h
 #define SubSketch_h

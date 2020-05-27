@@ -1,10 +1,10 @@
 /**
- * hopping.ino
- * gadget-coroutines
- * Stacked coroutines for the Arduino environment.
- * (C) 2020 John Graley; BSD license applies.
+ * @file hopping.ino
+ * ### `gadget-coroutines`
+ * _Stacked coroutines for the Arduino environment._\n
+ * @copyright (C) 2020 John Graley; BSD license applies.
  * 
- * Example: Flashing LEDs with hopping onto Timer ISR
+ * @brief Example: Flashing LEDs with hopping onto Timer ISR
  */
  
 #define USE_DOTSTAR

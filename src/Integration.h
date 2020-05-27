@@ -1,10 +1,10 @@
 /**
- * Integration.h
- * gadget-coroutines
- * Stacked coroutines for the Arduino environment.
- * (C) 2020 John Graley; BSD license applies.
+ * @file Integration.h
+ * ### `gadget-coroutines`
+ * _Stacked coroutines for the Arduino environment._\n
+ * @copyright (C) 2020 John Graley; BSD license applies.
  * 
- * Here, we integrate Gadget Coroutines into the Arduino environment.
+ * @brief Here, we integrate Gadget Coroutines into the Arduino environment.
  */
 
 #ifndef Integration_h

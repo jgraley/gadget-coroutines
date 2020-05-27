@@ -1,10 +1,10 @@
 /**
- * Coroutine_arm.h
- * gadget-coroutines
- * Stacked coroutines for the Arduino environment.
- * (C) 2020 John Graley; BSD license applies.
+ * @file Coroutine_arm.h
+ * ### `gadget-coroutines`
+ * _Stacked coroutines for the Arduino environment._\n
+ * @copyright (C) 2020 John Graley; BSD license applies.
  * 
- * Arm-specifics for Coroutine class.
+ * @brief Arm-specifics for Coroutine class.
  */
 #ifndef Coroutine_arm_h
 #define Coroutine_arm_h

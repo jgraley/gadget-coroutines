@@ -1,8 +1,8 @@
-# Gadget Coroutines
+## Gadget Coroutines
 
 _Stacked coroutines for the Arduino environment._
 
-## What can they do?
+### What can they do?
  - **Coroutine**: run many functions at the same time. These 
    _co-operate_ to share the CPU. When one of them wants to pause 
    processing, it calls `delay()` or `yield()`. When it's time to 
@@ -15,13 +15,13 @@ _Stacked coroutines for the Arduino environment._
  - **SuperFunctor**: coroutines can be invoked like C-style call-backs. 
  - **SubSketch**: run more than one Arduino sketch simultaneously.
 
-## What platforms are supported?
- - Only tested on **AdaFruit Trinket M0**, which is based on **Atmel 
+### What platforms are supported?
+ - Tested on **AdaFruit Trinket M0**, which is based on **Atmel 
    ATSAMD21E18**, which is built around the **ARM Cortex M0 plus**.
  - Porting to other bare-metal Cortex M systems should be 
    straightforward.
 
-## What examples are there?
+### What examples are there?
  - A simple foreground-only LED flashing example (`flashing.ino`)
  - An LED-flashing example that demonstrates hopping onto a timer 
    interrupt (`hopping.ino`).
@@ -34,7 +34,7 @@ _Stacked coroutines for the Arduino environment._
    simultaneous with the DMX receiver - _impossible without
    coroutines!_.
 
-## More documentation coming soon!
+### More documentation coming soon!
 
 ------------------   
-(C) 2020 John Graley [LGPL license](license.md) applies.
+@copyright (C) 2020 John Graley [LGPL license](license.md) applies.

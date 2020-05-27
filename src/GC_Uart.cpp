@@ -1,8 +1,8 @@
 /**
- * Uart.cpp
- * gadget-coroutines
- * Stacked coroutines for the Arduino environment.
- * (C) 2020 John Graley; BSD license applies.
+ * @file GC_Uart.cpp
+ * ### `gadget-coroutines`
+ * _Stacked coroutines for the Arduino environment._\n
+ * @copyright (C) 2020 John Graley; BSD license applies.
  */
 
 #include "GC_Uart.h"
@@ -13,32 +13,34 @@
 using namespace std;
 using namespace GC;
 
-GC::Uart::Uart(SERCOM *_s, void (**_vector)(), uint8_t _pinRX, uint8_t _pinTX, SercomRXPad _padRX, SercomUartTXPad _padTX) :
+GC::Uart::Uart(SERCOM *_s, void (**_vector_p)(), uint8_t _pinRX, uint8_t _pinTX, SercomRXPad _padRX, SercomUartTXPad _padTX) :
   ::Uart( _s, _pinRX, _pinTX, _padRX, _padTX ),
   sercom( _s ),
-  vector( _vector )
+  vector_p( _vector_p )
 {
 }
  
   
-GC::Uart::Uart(SERCOM *_s, void (**_vector)(), uint8_t _pinRX, uint8_t _pinTX, SercomRXPad _padRX, SercomUartTXPad _padTX, uint8_t _pinRTS, uint8_t _pinCTS) :
+GC::Uart::Uart(SERCOM *_s, void (**_vector_p)(), uint8_t _pinRX, uint8_t _pinTX, SercomRXPad _padRX, SercomUartTXPad _padTX, uint8_t _pinRTS, uint8_t _pinCTS) :
   ::Uart( _s, _pinRX, _pinTX, _padRX, _padTX, _pinRTS, _pinCTS ),
   sercom( _s ),
-  vector( _vector )
+  vector_p( _vector_p )
 {
 }
 
 
 void GC::Uart::begin(unsigned long baudRate)
 {
-  *vector = *me();
+  if( vector_p )
+    *vector_p = *me();
   ::Uart::begin(baudRate);
 }
 
 
 void GC::Uart::begin(unsigned long baudrate, uint16_t config)
 {
-  *vector = *me();
+  if( vector_p )
+    *vector_p = *me();
   ::Uart::begin(baudrate, config);
 }
 
@@ -46,7 +48,8 @@ void GC::Uart::begin(unsigned long baudrate, uint16_t config)
 void GC::Uart::end()
 {
   ::Uart::end();
-  *vector = nullptr;
+  if( vector_p )
+    *vector_p = nullptr;
 }
 
 

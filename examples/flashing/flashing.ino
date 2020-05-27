@@ -1,10 +1,10 @@
 /**
- * flashing.ino
- * gadget-coroutines
- * Stacked coroutines for the Arduino environment.
- * (C) 2020 John Graley; BSD license applies.
+ * @file flashing.ino
+ * ### `gadget-coroutines`
+ * _Stacked coroutines for the Arduino environment._\n
+ * @copyright (C) 2020 John Graley; BSD license applies.
  * 
- * Example: flashing LEDs using foreground coroutines
+ * @brief Example: flashing LEDs using foreground coroutines
  */
 #define USE_DOTSTAR
 
