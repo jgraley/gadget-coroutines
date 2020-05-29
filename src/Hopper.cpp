@@ -11,7 +11,7 @@
 #include <atomic>
 
 using namespace std;
-using namespace GC;
+using namespace HC;
 
 Hopper::Hopper( std::function<void()> &&attach_, std::function<void()> &&detach_ ) :
   previous_hop( current_hop ),

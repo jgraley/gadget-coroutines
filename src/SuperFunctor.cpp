@@ -9,7 +9,7 @@
 #include "Tracing.h"
 
 using namespace std;
-using namespace GC;
+using namespace HC;
 using namespace Arm;
 
 SuperFunctor::SuperFunctor() :

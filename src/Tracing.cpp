@@ -15,7 +15,7 @@
 #include "Arduino.h"
 
 using namespace std;
-using namespace GC;
+using namespace HC;
 using namespace Arm;
 
 void _gcoroutines_log(const char *message)

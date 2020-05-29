@@ -12,7 +12,7 @@
 #include <csetjmp> 
 #include <cstring>
 
-namespace GC
+namespace HC
 {
 namespace Arm
 {

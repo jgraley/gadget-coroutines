@@ -23,7 +23,7 @@
 #include <atomic>
 #include "Arduino.h"
 
-namespace GC
+namespace HC
 {
 
 class Coroutine : public Task
@@ -134,9 +134,9 @@ Coroutine::RAII_TR::~RAII_TR()
 
 } // namespace
 
-inline GC::Coroutine *me()
+inline HC::Coroutine *me()
 {
-  return GC::Coroutine::me();
+  return HC::Coroutine::me();
 }
 
 /** 

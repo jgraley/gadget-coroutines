@@ -15,8 +15,8 @@
 
 #include "Coroutine.h"
 
-#define GC_SUB_SKETCH_TASK_IMPL(NAMESPACE, CLASSEXT) \
-class NAMESPACE##CLASSEXT : public GC::Coroutine \
+#define HC_SUB_SKETCH_TASK_IMPL(NAMESPACE, CLASSEXT) \
+class NAMESPACE##CLASSEXT : public HC::Coroutine \
 { \
 public:  \
   NAMESPACE##CLASSEXT() : \
@@ -34,12 +34,12 @@ public:  \
  * This macro expands to a class type, that will run the sub-sketch 
  * located in the specified namespace. Use like eg
  * 
- * `GC_SUB_SKETCH_TASK(my_namespace) my_task;`
+ * `HC_SUB_SKETCH_TASK(my_namespace) my_task;`
  * 
  * You can then iterate the sub-sketch in the usual way eg via my_task().
  */
-#define GC_SUB_SKETCH_TASK(NAMESPACE) \
-GC_SUB_SKETCH_TASK_IMPL(NAMESPACE, _class_)
+#define HC_SUB_SKETCH_TASK(NAMESPACE) \
+HC_SUB_SKETCH_TASK_IMPL(NAMESPACE, _class_)
 
 
 #endif

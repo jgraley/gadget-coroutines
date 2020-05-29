@@ -1,19 +1,19 @@
 /**
- * @file GC_Uart.cpp
+ * @file HC_Uart.cpp
  * ### `hopping-coroutines`
  * _Stacked coroutines for the Arduino environment._\n
  * @copyright (C) 2020 John Graley; BSD license applies.
  */
 
-#include "GC_Uart.h"
+#include "HC_Uart.h"
 
 #include <functional>
 #include <atomic>
 
 using namespace std;
-using namespace GC;
+using namespace HC;
 
-GC::Uart::Uart(SERCOM *_s, void (**_vector_p)(), uint8_t _pinRX, uint8_t _pinTX, SercomRXPad _padRX, SercomUartTXPad _padTX) :
+HC::Uart::Uart(SERCOM *_s, void (**_vector_p)(), uint8_t _pinRX, uint8_t _pinTX, SercomRXPad _padRX, SercomUartTXPad _padTX) :
   ::Uart( _s, _pinRX, _pinTX, _padRX, _padTX ),
   sercom( _s ),
   vector_p( _vector_p )
@@ -21,7 +21,7 @@ GC::Uart::Uart(SERCOM *_s, void (**_vector_p)(), uint8_t _pinRX, uint8_t _pinTX,
 }
  
   
-GC::Uart::Uart(SERCOM *_s, void (**_vector_p)(), uint8_t _pinRX, uint8_t _pinTX, SercomRXPad _padRX, SercomUartTXPad _padTX, uint8_t _pinRTS, uint8_t _pinCTS) :
+HC::Uart::Uart(SERCOM *_s, void (**_vector_p)(), uint8_t _pinRX, uint8_t _pinTX, SercomRXPad _padRX, SercomUartTXPad _padTX, uint8_t _pinRTS, uint8_t _pinCTS) :
   ::Uart( _s, _pinRX, _pinTX, _padRX, _padTX, _pinRTS, _pinCTS ),
   sercom( _s ),
   vector_p( _vector_p )
@@ -29,7 +29,7 @@ GC::Uart::Uart(SERCOM *_s, void (**_vector_p)(), uint8_t _pinRX, uint8_t _pinTX,
 }
 
 
-void GC::Uart::begin(unsigned long baudRate)
+void HC::Uart::begin(unsigned long baudRate)
 {
   if( vector_p )
     *vector_p = *me();
@@ -37,7 +37,7 @@ void GC::Uart::begin(unsigned long baudRate)
 }
 
 
-void GC::Uart::begin(unsigned long baudrate, uint16_t config)
+void HC::Uart::begin(unsigned long baudrate, uint16_t config)
 {
   if( vector_p )
     *vector_p = *me();
@@ -45,7 +45,7 @@ void GC::Uart::begin(unsigned long baudrate, uint16_t config)
 }
 
 
-void GC::Uart::end()
+void HC::Uart::end()
 {
   ::Uart::end();
   if( vector_p )
@@ -53,7 +53,7 @@ void GC::Uart::end()
 }
 
 
-int GC::Uart::read( Error *error_p )
+int HC::Uart::read( Error *error_p )
 {
   if( error_p )
     *error_p = NO_ERROR;
@@ -69,7 +69,7 @@ int GC::Uart::read( Error *error_p )
 }
 
 
-void GC::Uart::handle_UART_error( Error *error_p )
+void HC::Uart::handle_UART_error( Error *error_p )
 {
   sercom->acknowledgeUARTError();
   if (sercom->isFrameErrorUART()) {

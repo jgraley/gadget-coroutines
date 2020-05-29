@@ -19,7 +19,7 @@
 
 #include <functional>
 
-namespace GC
+namespace HC
 {
 
 /**

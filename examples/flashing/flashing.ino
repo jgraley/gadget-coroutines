@@ -25,7 +25,7 @@ __thread int tls_var;
 int global_var;
 
   
-GC::Coroutine led_flasher_task([]()
+HC::Coroutine led_flasher_task([]()
 {
   int  local_var;
   while(1)
@@ -42,7 +42,7 @@ GC::Coroutine led_flasher_task([]()
 
 
 #ifdef USE_DOTSTAR
-GC::Coroutine dotstar_flasher_task([]()
+HC::Coroutine dotstar_flasher_task([]()
 {
   strip.begin(); // Initialize pins for output
   strip.show();  // Turn all LEDs off ASAP

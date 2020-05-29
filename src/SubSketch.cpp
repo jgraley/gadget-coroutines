@@ -11,6 +11,6 @@
 #include <atomic>
 
 using namespace std;
-using namespace GC;
+using namespace HC;
 
 

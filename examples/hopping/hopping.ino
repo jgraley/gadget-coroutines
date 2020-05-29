@@ -36,9 +36,9 @@ extern volatile DeviceVectors exception_table;
 INTERRUPT_HANDLER(TC3_Handler)
 
 
-GC::Coroutine led_flasher_task([]()
+HC::Coroutine led_flasher_task([]()
 {
-  GC::Hopper fg( []{ enable_fg=true; },
+  HC::Hopper fg( []{ enable_fg=true; },
                  []{ enable_fg=false; } );                             
 
 #ifdef USE_DOTSTAR
@@ -52,7 +52,7 @@ GC::Coroutine led_flasher_task([]()
     if( random(2) )
     {
       // "Hop" on to the interrupt
-      GC::Hopper hopper( []{ *get_TC3_Handler() = *me(); NVIC_EnableIRQ(TC3_IRQn); },
+      HC::Hopper hopper( []{ *get_TC3_Handler() = *me(); NVIC_EnableIRQ(TC3_IRQn); },
                          []{ NVIC_DisableIRQ(TC3_IRQn); *get_TC3_Handler() = nullptr; } );      
       yield(); // when this returns we're in ISR 
       TC->INTFLAG.bit.MC0 = 1; // Ack the interrupt
@@ -87,7 +87,7 @@ GC::Coroutine led_flasher_task([]()
   
       digitalWrite(RED_LED_PIN, false);
   
-      GC::Coroutine::yield(); 
+      HC::Coroutine::yield(); 
     }
   }
 });

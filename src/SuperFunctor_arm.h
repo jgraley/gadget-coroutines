@@ -13,7 +13,7 @@
 #include <cstddef>
 #include <cstdint>
 
-namespace GC
+namespace HC
 {
 namespace Arm
 {

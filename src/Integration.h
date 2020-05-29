@@ -4,7 +4,7 @@
  * _Stacked coroutines for the Arduino environment._\n
  * @copyright (C) 2020 John Graley; BSD license applies.
  * 
- * @brief Here, we integrate Gadget Coroutines into the Arduino environment.
+ * @brief Here, we integrate Hopping Coroutines into the Arduino environment.
  */
 
 #ifndef Integration_h

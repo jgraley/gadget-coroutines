@@ -15,7 +15,7 @@
 #include "Arduino.h"
 
 using namespace std;
-using namespace GC;
+using namespace HC;
 using namespace Arm;
 
 // Implement Arduino yield operation (called by eg delay()) to yield any 

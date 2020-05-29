@@ -16,7 +16,7 @@
 
 #include "SuperFunctor_arm.h"
 
-namespace GC
+namespace HC
 {
 
 class SuperFunctor

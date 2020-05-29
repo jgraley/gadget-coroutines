@@ -1,13 +1,13 @@
 /**
- * @file GC_Uart.h 
+ * @file HC_Uart.h 
  * ### `hopping-coroutines`
  * _Stacked coroutines for the Arduino environment._\n
  * @copyright (C) 2020 John Graley; BSD license applies.
  * 
  * @brief Uart class tailored for coroutines
  */
-#ifndef GC_Uart_h
-#define GC_Uart_h
+#ifndef HC_Uart_h
+#define HC_Uart_h
 
 #if __cplusplus <= 199711L
   #error This library needs at least a C++11 compliant compiler
@@ -15,7 +15,7 @@
 
 #include "Coroutine.h"
 
-namespace GC
+namespace HC
 {
 
 /**
@@ -91,7 +91,7 @@ public:
 private:
   void handle_UART_error( Error *error );
   SERCOM *sercom;
-  void (**vector)();
+  void (**vector_p)();
 };
 
 } // namespace

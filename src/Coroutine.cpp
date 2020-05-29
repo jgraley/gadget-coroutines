@@ -18,7 +18,7 @@
 #include "Arduino.h"
 
 using namespace std;
-using namespace GC;
+using namespace HC;
 using namespace Arm;
 
 // Only enable when constructing after system initialisation, eg in setup()
@@ -230,14 +230,16 @@ void Coroutine::jump_to_parent()
 extern void *__HeapLimit;
 void *Coroutine::get_cls_address(void *obj)
 {
+    // This basically implements __thread by replacing the GCC builtin
+    // function __emutls_get_address().
     __emutls_object * const euo = (__emutls_object *)obj;   
     const Coroutine *me = ::me();
     if( euo->loc.offset==0 )
     {
-      // The first time a TLS item is accessed, regardless of context, we
+      // The first time a CLS item is accessed, regardless of context, we
       // give it an offset.  
       if( cls_heap_top==0 )
-        cls_heap_top++; // If we put 0 into euo.loc.offset, it will be indistinguishable from nullptr
+        cls_heap_top++; // If we put 0 into euo.loc.offset, it will be indistinguishable from its init value of 0
       euo->loc.offset = (cls_heap_top + euo->align - 1) & ~(euo->align - 1);
       cls_heap_top = euo->loc.offset + euo->size;
     }
@@ -245,12 +247,12 @@ void *Coroutine::get_cls_address(void *obj)
     byte *cls_heap;
     if( me )
     {
-      // TLS data accessed in a coroutine  
+      // CLS data accessed in a coroutine  
       cls_heap = me->child_stack_memory;
     }
     else
     {
-      // TLS data accessed outside of any coroutine
+      // CLS data accessed outside of any coroutine
       // The first time this happens, we'll have to allocate a block of memory
       if( !cls_foreground_heap )
         cls_foreground_heap = (byte *)calloc(default_stack_size, 1);

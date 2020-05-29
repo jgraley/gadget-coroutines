@@ -32,7 +32,7 @@ _Stacked coroutines for the Arduino environment._
    - SSD1306 OLED display
  - `dimmer.ino` can also run the SSD1306 OLED display driver example 
    simultaneous with the DMX receiver - _impossible without
-   coroutines!_.
+   coroutines!_
 
 ### More documentation coming soon!
 

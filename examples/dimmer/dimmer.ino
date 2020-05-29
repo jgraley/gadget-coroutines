@@ -19,7 +19,7 @@
 #include "Coroutine.h"
 #include "Hopper.h"
 #include "wiring_private.h"
-#include "GC_Uart.h"
+#include "HC_Uart.h"
 
 
 #ifdef SSD1306_EXAMPLE_AS_SUBSKETCH
@@ -42,7 +42,7 @@ namespace display_subsketch
 #include "/home/jgraley/arduino/Arduino/libraries/Adafruit_SSD1306/examples/ssd1306_128x32_i2c/ssd1306_128x32_i2c.ino" 
 }
 // See SubSketch.h for info about this
-GC_SUB_SKETCH_TASK(display_subsketch) display_subsketch_task;
+HC_SUB_SKETCH_TASK(display_subsketch) display_subsketch_task;
 #endif
 
 #ifdef LEVELS_TO_SSD1306
@@ -83,10 +83,10 @@ volatile bool enable_fg = true;
 // 1. We use the INTERRUPT_HANDLER to generate an interrupt handler.
 // 2. This interrupt handler forwards throuh a vector that is non_const.
 // 3. Name of vector is just handler name with _ptr appended.
-// 4. We construct a GC::Uart instead of a Uart, and pass in the vector.
+// 4. We construct a HC::Uart instead of a Uart, and pass in the vector.
 // 5. You'll have to comment out ISR and Uart declrations in variant.h/cpp
 INTERRUPT_HANDLER(SERCOM0_Handler)
-GC::Uart Serial1(&sercom0, get_SERCOM0_Handler(), PIN_SERIAL1_RX, PIN_SERIAL1_TX, PAD_SERIAL1_RX, PAD_SERIAL1_TX);
+HC::Uart Serial1(&sercom0, get_SERCOM0_Handler(), PIN_SERIAL1_RX, PIN_SERIAL1_TX, PAD_SERIAL1_RX, PAD_SERIAL1_TX);
 
 
 // With coroutines, it's often more natural to set something
@@ -110,12 +110,12 @@ void output_dmx_frame();
 void get_dmx_frame();
 uint8_t start_code;
 uint8_t dmx_frame[512];
-GC::Uart::Error serial_error;
+HC::Uart::Error serial_error;
 
 
-GC::Coroutine dmx_task([]
+HC::Coroutine dmx_task([]
 {
-  GC::Hopper fg( []{ enable_fg=true; },
+  HC::Hopper fg( []{ enable_fg=true; },
                  []{ enable_fg=false; } );                             
                  
   pinMode(RED_LED_PIN, OUTPUT);
@@ -135,7 +135,7 @@ GC::Coroutine dmx_task([]
     get_dmx_frame();
     yield();
 
-    if( serial_error & GC::Uart::FRAME_ERROR )
+    if( serial_error & HC::Uart::FRAME_ERROR )
     {
       digitalWrite(RED_LED_PIN, HIGH);
 #ifdef LEVELS_TO_SSD1306
@@ -160,16 +160,16 @@ GC::Coroutine dmx_task([]
 void wait_for_break_pulse()
 {
   // "Hop" on to the pin interrupt
-  GC::Hopper hopper( []{ attachInterrupt(DMX_RX_PIN, *me(), CHANGE); },
+  HC::Hopper hopper( []{ attachInterrupt(DMX_RX_PIN, *me(), CHANGE); },
                      []{ detachInterrupt(DMX_RX_PIN); } );                             
 
   int len;
   do
   {
-    GC::Coroutine::wait( []{ return digitalRead(DMX_RX_PIN)==0; } );
+    HC::Coroutine::wait( []{ return digitalRead(DMX_RX_PIN)==0; } );
     int t0 = my_micros();
     
-    GC::Coroutine::wait( []{ return digitalRead(DMX_RX_PIN)==1; } );
+    HC::Coroutine::wait( []{ return digitalRead(DMX_RX_PIN)==1; } );
     int t1 = my_micros();
       
     len = t1 - t0;
@@ -180,7 +180,7 @@ void wait_for_break_pulse()
 void get_frame_data()
 {
   // "Hop" across to UART interrupt
-  GC::Hopper hopper( []{ Serial1.begin(250000, SERIAL_8N2); }, 
+  HC::Hopper hopper( []{ Serial1.begin(250000, SERIAL_8N2); }, 
                      []{ Serial1.end(); } ); 
 
   start_code = Serial1.read(&serial_error);
