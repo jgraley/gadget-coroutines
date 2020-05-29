@@ -1,4 +1,4 @@
-## Gadget Coroutines
+## Hopping Coroutines
 
 _Stacked coroutines for the Arduino environment._
 
