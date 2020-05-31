@@ -57,7 +57,7 @@ int HC::Uart::read( Error *error_p )
 {
   if( error_p )
     *error_p = NO_ERROR;
-  Coroutine::wait( [=]{ return sercom->isUARTError() || sercom->availableDataUART(); } );
+  wait( [=]{ return sercom->isUARTError() || sercom->availableDataUART(); } );
 
   if(sercom->isUARTError())
   {

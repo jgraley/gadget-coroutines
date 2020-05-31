@@ -30,7 +30,7 @@ namespace HC
  * is scope exit for automatic objects (non-static locals).
  * 
  * Here, the "resource" is receiving invocations from a particular 
- * source. The user proivides lambdas to actually obtain and release
+ * source. The user provides lambdas to actually obtain and release
  * that resource (i.e. to attach to the source and detach again) and 
  * the `Hopper` object will ensure that the detach lambda is called 
  * on scope exit (if allocated automatically).

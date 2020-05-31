@@ -7,7 +7,7 @@
  * @brief Example: DMX receiver with DotStar and SSD1306 display
  */
 
-//#define LEVELS_TO_SSD1306
+#define LEVELS_TO_SSD1306
 #define LEVELS_TO_DOTSTAR
 //#define STACK_USAGE_TO_SERIAL
 //#define SSD1306_EXAMPLE_AS_SUBSKETCH
@@ -89,25 +89,6 @@ INTERRUPT_HANDLER(SERCOM0_Handler)
 HC::Uart Serial1(&sercom0, get_SERCOM0_Handler(), PIN_SERIAL1_RX, PIN_SERIAL1_TX, PAD_SERIAL1_RX, PAD_SERIAL1_TX);
 
 
-// With coroutines, it's often more natural to set something
-// up just before you need it.
-void setup() 
-{  
-}  
-
-
-extern volatile uint32_t _ulTickCount;
-unsigned long my_micros( void )
-{
-  uint32_t ticks  = SysTick->VAL;
-  uint32_t pend   = !!(SCB->ICSR & SCB_ICSR_PENDSTSET_Msk)  ;
-  uint32_t count  = _ulTickCount ;
-  return ((count+pend) * 1000) + (((SysTick->LOAD  - ticks)*(1048576/(VARIANT_MCK/1000000)))>>20) ;
-}
-
-
-void output_dmx_frame();
-void get_dmx_frame();
 uint8_t start_code;
 uint8_t dmx_frame[512];
 HC::Uart::Error serial_error;
@@ -157,6 +138,14 @@ HC::Coroutine dmx_task([]
   }
 });
 
+
+void get_dmx_frame()
+{
+  wait_for_break_pulse();             
+  get_frame_data();        
+}
+
+
 void wait_for_break_pulse()
 {
   // "Hop" on to the pin interrupt
@@ -166,11 +155,11 @@ void wait_for_break_pulse()
   int len;
   do
   {
-    HC::Coroutine::wait( []{ return digitalRead(DMX_RX_PIN)==0; } );
-    int t0 = my_micros();
+    wait( []{ return digitalRead(DMX_RX_PIN)==0; } );
+    int t0 = micros_from_ISR();
     
-    HC::Coroutine::wait( []{ return digitalRead(DMX_RX_PIN)==1; } );
-    int t1 = my_micros();
+    wait( []{ return digitalRead(DMX_RX_PIN)==1; } );
+    int t1 = micros_from_ISR();
       
     len = t1 - t0;
   } while( len < 72 );
@@ -198,10 +187,20 @@ void get_frame_data()
 }
 
 
-void get_dmx_frame()
+void output_dmx_frame()
 {
-  wait_for_break_pulse();             
-  get_frame_data();        
+  //TRACE("%dus: %d %d %d %d %d %d", len, dmx_frame[0], dmx_frame[1], dmx_frame[2], dmx_frame[3], dmx_frame[4], dmx_frame[5] );
+  if( dmx_frame[3] >= 128 )
+      digitalWrite(RED_LED_PIN, HIGH);
+  else 
+      digitalWrite(RED_LED_PIN, LOW);
+#ifdef LEVELS_TO_DOTSTAR
+  strip.setPixelColor(0, (dmx_frame[0]<<16) + (dmx_frame[1]<<8) + dmx_frame[2]);
+  strip.show();
+#endif
+#ifdef LEVELS_TO_SSD1306
+  display_levels();
+#endif    
 }
 
 
@@ -244,22 +243,20 @@ void display_bad_frame()
 }
 #endif
 
-void output_dmx_frame()
+extern volatile uint32_t _ulTickCount;
+unsigned long micros_from_ISR( void )
 {
-  //TRACE("%dus: %d %d %d %d %d %d", len, dmx_frame[0], dmx_frame[1], dmx_frame[2], dmx_frame[3], dmx_frame[4], dmx_frame[5] );
-  if( dmx_frame[3] >= 128 )
-      digitalWrite(RED_LED_PIN, HIGH);
-  else 
-      digitalWrite(RED_LED_PIN, LOW);
-#ifdef LEVELS_TO_DOTSTAR
-  strip.setPixelColor(0, (dmx_frame[0]<<16) + (dmx_frame[1]<<8) + dmx_frame[2]);
-  strip.show();
-#endif
-#ifdef LEVELS_TO_SSD1306
-  display_levels();
-#endif    
+  uint32_t ticks  = SysTick->VAL;
+  uint32_t pend   = !!(SCB->ICSR & SCB_ICSR_PENDSTSET_Msk)  ;
+  uint32_t count  = _ulTickCount ;
+  return ((count+pend) * 1000) + (((SysTick->LOAD  - ticks)*(1048576/(VARIANT_MCK/1000000)))>>20) ;
 }
 
+// With coroutines, it's often more natural to set something
+// up just before you need it.
+void setup() 
+{  
+}  
 
 void loop()
 {

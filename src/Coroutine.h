@@ -35,7 +35,7 @@ public:
   inline static Coroutine *me();
   inline static void yield();
 
-  static void wait( std::function<bool()> test );
+  static void wait( const std::function<bool()> &test );
   void set_hop_lambda( std::function<void()> hop );
   std::pair<const byte *, const byte *> get_child_stack_bounds();
   int estimate_stack_peak_usage();
@@ -137,6 +137,11 @@ Coroutine::RAII_TR::~RAII_TR()
 inline HC::Coroutine *me()
 {
   return HC::Coroutine::me();
+}
+
+inline void wait( const std::function<bool()> &test )
+{
+  HC::Coroutine::wait(test);
 }
 
 /** 

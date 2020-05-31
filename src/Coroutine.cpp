@@ -73,7 +73,7 @@ Coroutine::~Coroutine()
 }
 
 
-void Coroutine::wait( std::function<bool()> test )
+void Coroutine::wait( const std::function<bool()> &test )
 {
     do
     {
