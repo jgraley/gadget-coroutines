@@ -70,7 +70,7 @@ public:
    * Note that this code _is allowed_ to enable an interrupt whose
    * ISR may then _re-enter_ the task's functor interface. This is 
    * likely to happen when hopping from foreground to an interrupt that 
-   * is already pending. `run_iteration()` will not be re-entered.
+   * is already pending. `invoke()` will not be re-entered.
    * 
    * @param hop a lambda to be executed when the functor returns.
    */  
@@ -78,7 +78,7 @@ public:
   
 protected:
   inline void check_valid_this() const;
-  virtual void run_iteration() = 0;
+  virtual void invoke() = 0;
   
 private:
   const uint32_t magic;

@@ -36,7 +36,7 @@ public:  \
  * 
  * `HC_SUB_SKETCH_TASK(my_namespace) my_task;`
  * 
- * You can then iterate the sub-sketch in the usual way eg via my_task().
+ * You can then invoke the sub-sketch in the usual way eg via my_task().
  */
 #define HC_SUB_SKETCH_TASK(NAMESPACE) \
 HC_SUB_SKETCH_TASK_IMPL(NAMESPACE, _class_)

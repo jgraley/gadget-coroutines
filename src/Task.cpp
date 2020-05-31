@@ -23,7 +23,7 @@ void Task::operator()()
 {
   check_valid_this();
 
-  run_iteration();
+  invoke();
     
   if( !hop_lambda )
     return;
