@@ -22,7 +22,7 @@ using namespace HC;
 using namespace Arm;
 
 // Only enable when constructing after system initialisation, eg in setup()
-#define CONSTRUCTOR_TRACE DISABLED_TRACE
+#define CONSTRUCTOR_TRACE HC_DISABLED_TRACE
 
 Coroutine::Coroutine( function<void()> child_function_ ) :
   child_function( child_function_ ),
@@ -30,7 +30,7 @@ Coroutine::Coroutine( function<void()> child_function_ ) :
   child_stack_memory( (byte *)calloc(default_stack_size, 1) ),
   child_status( READY )
 {    
-  ASSERT(child_function, "NULL child function was supplied");
+  HC_ASSERT(child_function, "NULL child function was supplied");
   jmp_buf initial_jmp_buf;
   int val;
   CONSTRUCTOR_TRACE("this=%p sp=%p", this, get_sp());
@@ -58,7 +58,7 @@ Coroutine::Coroutine( function<void()> child_function_ ) :
     }
     default: {
       // This setjmp call was only to get the stack pointer. 
-      ERROR("unexpected longjmp value: %d", val);
+      HC_ERROR("unexpected longjmp value: %d", val);
     }
   }
 }
@@ -67,7 +67,7 @@ Coroutine::Coroutine( function<void()> child_function_ ) :
 Coroutine::~Coroutine()
 {
   check_valid_this();
-  ASSERT( child_status == COMPLETE, "destruct when child was not complete, status %d", (int)child_status );
+  HC_ASSERT( child_status == COMPLETE, "destruct when child was not complete, status %d", (int)child_status );
   delete[] child_stack_memory;
   bring_in_Integration();
 }
@@ -176,7 +176,7 @@ void Coroutine::invoke()
     }
                     
     default: {
-      ERROR("unexpected longjmp value: %d", val);
+      HC_ERROR("unexpected longjmp value: %d", val);
     }
   }  
 }
@@ -203,7 +203,7 @@ void Coroutine::jump_to_child()
 void Coroutine::yield_nonstatic()
 {
   check_valid_this();
-  ASSERT( child_status == RUNNING, "yield when child was not running, status %d", (int)child_status );
+  HC_ASSERT( child_status == RUNNING, "yield when child was not running, status %d", (int)child_status );
   
   int val;
   switch( val = setjmp( child_jmp_buf ) ) {                    
@@ -215,7 +215,7 @@ void Coroutine::yield_nonstatic()
       break; 
     }    
     default: {
-      ERROR("unexpected longjmp value: %d", val);
+      HC_ERROR("unexpected longjmp value: %d", val);
     }
   }    
 }

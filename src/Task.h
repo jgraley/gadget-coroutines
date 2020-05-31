@@ -91,7 +91,7 @@ private:
 
 void Task::check_valid_this() const
 {
-  ASSERT( magic == MAGIC, "bad this pointer or object corrupted: %p", this );
+  HC_ASSERT( magic == MAGIC, "bad this pointer or object corrupted: %p", this );
 }
 
 void Task::set_hop_lambda( std::function<void()> hop )
@@ -103,7 +103,7 @@ void Task::set_hop_lambda( std::function<void()> hop )
 
 // NOTE: if super functors are disabled, we should be able to change the 
 // implementation here to use `Task &` and `Task *` directly. #43
-#define INTERRUPT_HANDLER_IMPL(ISR_NAME, PTR, GET) \
+#define HC_INTERRUPT_HANDLER_IMPL(ISR_NAME, PTR, GET) \
 void (*ISR_NAME##PTR)() = nullptr; \
 void ISR_NAME() \
 { \
@@ -125,7 +125,7 @@ void (**GET##ISR_NAME())() \
  * 
  * @param ISR_NAME name of the interrupt to generate.
  */
-#define INTERRUPT_HANDLER(ISR_NAME) \
-  INTERRUPT_HANDLER_IMPL(ISR_NAME, _ptr, get_)
+#define HC_INTERRUPT_HANDLER(ISR_NAME) \
+  HC_INTERRUPT_HANDLER_IMPL(ISR_NAME, _ptr, get_)
 
 #endif

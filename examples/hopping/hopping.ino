@@ -33,7 +33,7 @@ volatile bool enable_fg = true;
 #include "sam.h"
 extern volatile DeviceVectors exception_table;
 
-INTERRUPT_HANDLER(TC3_Handler)
+HC_INTERRUPT_HANDLER(TC3_Handler)
 
 
 HC::Coroutine led_flasher_task([]()

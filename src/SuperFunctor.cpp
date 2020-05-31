@@ -16,10 +16,10 @@ SuperFunctor::SuperFunctor() :
     entrypoint_fpt(nullptr)
 {
     const pair<MachineInstruction *, int> assembly = GetAssembly();
-    ASSERT( assembly.second <= SUPER_FUNCTOR_TRAMPOLINE_SIZE, "Thunk assemebly too long" );
+    HC_ASSERT( assembly.second <= SUPER_FUNCTOR_TRAMPOLINE_SIZE, "Thunk assemebly too long" );
     memcpy( entrypoint_trampoline, assembly.first, assembly.second * sizeof(MachineInstruction) );     
     __builtin___clear_cache(entrypoint_trampoline, entrypoint_trampoline+sizeof(entrypoint_trampoline)); // We've written some code into memory
-    //TRACE("trampoline at %p %x %x %x %x", entrypoint_trampoline, entrypoint_trampoline[0], entrypoint_trampoline[1], entrypoint_trampoline[2], entrypoint_trampoline[3]);
+    //HC_TRACE("trampoline at %p %x %x %x %x", entrypoint_trampoline, entrypoint_trampoline[0], entrypoint_trampoline[1], entrypoint_trampoline[2], entrypoint_trampoline[3]);
 }
 
 
@@ -35,7 +35,7 @@ SuperFunctor::operator EntryPointFP()
         // alias an array of words over the member function pointer
         typedef array<uint32_t, sizeof(EntryPointMFP)/sizeof(uint32_t)> MFPWords;
         MFPWords &mfp_words = *(MFPWords *)&mfp;
-        ASSERT( mfp_words.size() == member_function_pointer_size/4, "Unexpected size of member function pointer");    
+        HC_ASSERT( mfp_words.size() == member_function_pointer_size/4, "Unexpected size of member function pointer");    
         
         auto this_words = (uint32_t *)this;
         entrypoint_fpt = (EntryPointFPT)get_vcall_destination( mfp_words.data(), this_words );
@@ -73,7 +73,7 @@ void SuperFunctor::TestPCRelative()
 {
     uint8_t *pc_grab;
     asm( "mov %[result], pc" :  [result] "=r" (pc_grab)  : : );    
-    TRACE("Grabbed PC: %p; function pointer:%p", pc_grab, &SuperFunctor::TestPCRelative);
+    HC_TRACE("Grabbed PC: %p; function pointer:%p", pc_grab, &SuperFunctor::TestPCRelative);
     /* What I learned:
      * - Grabbed PC is ahead of the mov instruction by 4 bytes (actually 2 
      *   instructions, I think, so only correct in thumb mode)
@@ -86,12 +86,12 @@ void SuperFunctor::TestPCRelative()
 void SuperFunctor::TestMemberFunctionPointer()
 {
     void (SuperFunctor::* volatile mfp)() = &SuperFunctor::operator();
-    TRACE("Size of member function pointer: %d", sizeof(mfp));
-    TRACE("As uint32_t: %x %x", ((uint32_t *)&mfp)[0], ((uint32_t *)&mfp)[1] );
+    HC_TRACE("Size of member function pointer: %d", sizeof(mfp));
+    HC_TRACE("As uint32_t: %x %x", ((uint32_t *)&mfp)[0], ((uint32_t *)&mfp)[1] );
     SuperFunctor s;
     //(s.*mfp)();
-    TRACE("Thises: %p %p", &s, (SuperFunctor *)&s );
-    TRACE("entrypoint_trampoline: %p", &(s.entrypoint_trampoline) );
+    HC_TRACE("Thises: %p %p", &s, (SuperFunctor *)&s );
+    HC_TRACE("entrypoint_trampoline: %p", &(s.entrypoint_trampoline) );
 
     /* What I learned:
      * - Size of MFP is 8 bytes: Updated:
@@ -112,8 +112,8 @@ void SuperFunctor::TestUnpack()
     SuperFunctor s;
     EntryPointMFP mfp = &SuperFunctor::operator();
     EntryPointFPT fpt = s.UnpackMemberFunctionPointer( mfp ); 
-    TRACE("Thises: %p %p", &s, (SuperFunctor *)&s );
-    TRACE("operator() as uint32_t: %x %x", ((uint32_t *)&mfp)[0], ((uint32_t *)&mfp)[1] );
-    TRACE("FPT as uint32_t: %x", ((uint32_t *)&fpt)[0] );
+    HC_TRACE("Thises: %p %p", &s, (SuperFunctor *)&s );
+    HC_TRACE("operator() as uint32_t: %x %x", ((uint32_t *)&mfp)[0], ((uint32_t *)&mfp)[1] );
+    HC_TRACE("FPT as uint32_t: %x", ((uint32_t *)&fpt)[0] );
 }
 #endif

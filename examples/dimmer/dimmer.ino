@@ -80,12 +80,12 @@ volatile bool enable_fg = true;
 
 // Similar to what we get at the bottom of variant.cpp (for your platform), 
 // Except that:
-// 1. We use the INTERRUPT_HANDLER to generate an interrupt handler.
+// 1. We use the HC_INTERRUPT_HANDLER to generate an interrupt handler.
 // 2. This interrupt handler forwards throuh a vector that is non_const.
 // 3. Name of vector is just handler name with _ptr appended.
 // 4. We construct a HC::Uart instead of a Uart, and pass in the vector.
 // 5. You'll have to comment out ISR and Uart declrations in variant.h/cpp
-INTERRUPT_HANDLER(SERCOM0_Handler)
+HC_INTERRUPT_HANDLER(SERCOM0_Handler)
 HC::Uart Serial1(&sercom0, get_SERCOM0_Handler(), PIN_SERIAL1_RX, PIN_SERIAL1_TX, PAD_SERIAL1_RX, PAD_SERIAL1_TX);
 
 
@@ -107,7 +107,7 @@ HC::Coroutine dmx_task([]
 #ifdef LEVELS_TO_SSD1306
   if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C))  // Address 0x3D for 128x64
   { 
-    TRACE("SSD1306 allocation failed");
+    HC_TRACE("SSD1306 allocation failed");
     return;
   }
 #endif
@@ -122,7 +122,7 @@ HC::Coroutine dmx_task([]
 #ifdef LEVELS_TO_SSD1306
       display_bad_frame();
 #else
-      TRACE("frame error" );
+      HC_TRACE("frame error" );
 #endif      
       continue;
     }
@@ -132,7 +132,7 @@ HC::Coroutine dmx_task([]
       output_dmx_frame();
     }
 #if defined(STACK_USAGE_TO_SERIAL) && !defined(LEVELS_TO_SSD1306)
-    TRACE("CLS %d Stack %d", me()->get_cls_usage(), me()->estimate_stack_peak_usage());
+    HC_TRACE("CLS %d Stack %d", me()->get_cls_usage(), me()->estimate_stack_peak_usage());
 #endif
     yield();
   }
@@ -189,7 +189,7 @@ void get_frame_data()
 
 void output_dmx_frame()
 {
-  //TRACE("%dus: %d %d %d %d %d %d", len, dmx_frame[0], dmx_frame[1], dmx_frame[2], dmx_frame[3], dmx_frame[4], dmx_frame[5] );
+  //HC_TRACE("%dus: %d %d %d %d %d %d", len, dmx_frame[0], dmx_frame[1], dmx_frame[2], dmx_frame[3], dmx_frame[4], dmx_frame[5] );
   if( dmx_frame[3] >= 128 )
       digitalWrite(RED_LED_PIN, HIGH);
   else 

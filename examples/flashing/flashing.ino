@@ -30,7 +30,7 @@ HC::Coroutine led_flasher_task([]()
   int  local_var;
   while(1)
   {
-    //TRACE("tls_var LED flasher %p global %p local %p", &tls_var, &global_var, &local_var);
+    //HC_TRACE("tls_var LED flasher %p global %p local %p", &tls_var, &global_var, &local_var);
     digitalWrite(13, HIGH);   // turn the LED on (HIGH is the voltage level)
     delay(500);               // wait for a second
     digitalWrite(13, LOW);    // turn the LED off by making the voltage LOW
@@ -76,7 +76,7 @@ void loop() {
   delay(154);
   Serial.println(tls_var);
   tls_var += 7;
-  //TRACE("tls_var outside %p global %p local %p", &tls_var, &global_var, &local_var);
+  //HC_TRACE("tls_var outside %p global %p local %p", &tls_var, &global_var, &local_var);
   led_flasher_task();
 #ifdef USE_DOTSTAR
   dotstar_flasher_task();
